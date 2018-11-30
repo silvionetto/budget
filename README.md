@@ -28,12 +28,16 @@ Aluguel - Despesas Domesticas
   - description: String
   
 Ex:
-ING - 
+ING - 23/12/2018 - 1000 - Wage/Salary
 
-# Expense
-  - month: Integer
-  - year: Integer
-  - planed: Double
-  - actual: Double
-  
-# Income
+# Use Cases
+
+## Upload file
+
+- Upload the ING CSV file.
+- Convert into Bean.
+- Save into the database.
+
+## Register Transaction
+
+- Add new transctions manually.
