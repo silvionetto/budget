@@ -10,11 +10,11 @@ Stores
  - List Stores
  - Edit Store
  - Categories
-  - List Categories
-  - Edit Category
+   - List Categories
+   - Edit Category
  - SubCategories
-  - List Subcategories
-  - Edit Subcategory
+   - List Subcategories
+   - Edit Subcategory
 
 Reports
 
