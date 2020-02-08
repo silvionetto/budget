@@ -5,6 +5,17 @@ Monthly Budget
  
 Annual Budget
 
+Stores
+ - Unclassified
+ - List Stores
+ - Edit Store
+ - Categories
+  - List Categories
+  - Edit Category
+ - SubCategories
+  - List Subcategories
+  - Edit Subcategory
+
 Reports
 
 # Category
