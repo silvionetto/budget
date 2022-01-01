@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<div th:insert="header :: title"></div>
+
+<h1>
+    <a href="home" th:href="@{'/'}" th:text="${subcategory.category.type}">category.type</a> :
+    <a href="home" th:href="@{'/'+${subcategory.category.type}+'/'+${subcategory.category.name}}" th:text="${subcategory.category.name}">category.name</a> :
+    <span th:text="${subcategory.name}">subcategory.name</span>
+</h1>
+
+
+
+<h2>Stores</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Name</th>
+    </tr>
+    </thead>
+    <tbody>
+        <tr th:each="store : ${stores}">
+            <td>
+                <a href="/store/{{id}}" th:href="@{'/store/'+${store.id}}" th:text="${store.name}">name</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+<div th:insert="footer"></div>
+</body>
+
+</html>

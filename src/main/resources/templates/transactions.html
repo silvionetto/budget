@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:insert="header"></div>
+<body>
+<div th:insert="menu"></div>
+<div th:insert="header :: title"></div>
+
+<span id="transactions" th:if="${transactions != null}">
+    <table border="1" width="100%" class="table table-hover">
+        <thead>
+        <tr bgcolor="#87CEFA">
+            <th>DATE</th>
+            <th>STORE</th>
+            <th>AMOUNT</th>
+            <th>TYPE</th>
+            <th width="30%">NOTES</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="transaction : ${transactions}">
+            <td th:text="${transaction.date}">01-01-2019</td>
+            <td>
+                <a href="/store/id"
+                   th:href="@{'/store/'+${transaction.store.id}}"
+                    th:text="${transaction.store.name}">Store Name</a>
+            </td>
+            <td th:text="${transaction.amount}">100</td>
+            <td th:text="${transaction.debitCredit}">Debit</td>
+            <td th:text="${transaction.notifications}" width="30%">notifications</td>
+        </tr>
+        </tbody>
+    </table>
+</span>
+
+<div th:insert="footer"></div>
+</body>
+
+</html>

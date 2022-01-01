@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<div th:insert="header :: title"></div>
+
+<h1>
+    <a href="home" th:href="@{'/'}" th:text="${subcategory.category.type}">category.type</a> :
+    <a href="category" th:href="@{'/'+${subcategory.category.type}+'/'+${subcategory.category.name}}" th:text="${subcategory.category.name}">category.name</a> :
+    <a href="subcategory" th:href="@{'/'+${subcategory.category.type}+'/'+${subcategory.category.name}+'/'+${subcategory.name}}" th:text="${subcategory.name}">subcategory.name</a>
+</h1>
+
+<h2 th:text="${title}+' : '+${category.type}+' : '+${category.name}+' : '+${subcategory.name}">title : category.type :
+    category.name : subcategory.name</h2>
+
+<form enctype="application/json" name="store" action="/store/store.id" th:action="@{'/store/'+${store.id}}"
+      method="post">
+    <fieldset>
+        <label>Name:</label>
+        <input type="text" class="form-control" name="name" id="name" value="store.name" th:value="${store.name}" size="100">
+    </fieldset>
+
+    <fieldset>
+        <label>Category:</label>
+        <select id="category" name="category">
+            <option value="name" th:each="category : ${categories}" th:value="${category.name}" th:text="${category.name}" th:selected="${store.subCategory.category.name==category.name}">name</option>
+        </select>
+    </fieldset>
+
+    <fieldset>
+        <label>SubCategory:</label>
+        <select id="subCategory" name="subCategory">
+            <option value="name" th:each="subCategory : ${subcategories}" th:value="${subCategory.name}" th:text="${subCategory.name}" th:selected="${store.subCategory.name==subCategory.name}">name</option>
+        </select>
+    </fieldset>
+
+    <fieldset>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </fieldset>
+
+</form>
+
+<div th:insert="transaction"></div>
+</body>
+
+</html>

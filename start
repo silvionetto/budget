@@ -1,0 +1,5 @@
+ #!/bin/bash
+ # Start Budget Application
+
+ echo "Starting Budget Application!"
+ nohup ./mvnw spring-boot:run &

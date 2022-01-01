@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:insert="header"></div>
+<body>
+<div th:insert="menu"></div>
+<div th:insert="header :: title"></div>
+
+<h1>
+    <a href="home" th:href="@{'/'}" th:text="${category.type}">category.type</a>:
+    <a href="home" th:href="@{'/'}" th:text="${category.name}">category.name</a>
+</h1>
+
+<h2>Categories</h2>
+<table width="100%" class="table table-hover">
+    <thead>
+    <tr bgcolor="#87CEFA">
+        <th>Name</th>
+        <th>JAN</th>
+        <th>FEV</th>
+        <th>MAR</th>
+        <th>ABR</th>
+        <th>MAI</th>
+        <th>JUN</th>
+        <th>JUL</th>
+        <th>AGO</th>
+        <th>SET</th>
+        <th>OUT</th>
+        <th>NOV</th>
+        <th>DEZ</th>
+        <th>TOTAL</th>
+        <th>MEDIA</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="budget : ${budgets}">
+        <td>
+            <a href="/type/category" th:href="@{'/categories/'+${budget.category}}"
+               th:text="${budget.category}">Category</a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/JANUARY'}">
+                <span th:text="${#numbers.formatDecimal(budget.january, 1, 0)}">January</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/FEBRUARY'}">
+                <span th:text="${#numbers.formatDecimal(budget.february, 1, 0)}">February</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/MARCH'}">
+                <span th:text="${#numbers.formatDecimal(budget.march, 1, 0)}">March</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/APRIL'}">
+                <span th:text="${#numbers.formatDecimal(budget.april, 1, 0)}">April</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/MAY'}">
+                <span th:text="${#numbers.formatDecimal(budget.may, 1, 0)}">May</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/JUNE'}">
+                <span th:text="${#numbers.formatDecimal(budget.june, 1, 0)}">June</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/JULY'}">
+                <span th:text="${#numbers.formatDecimal(budget.july, 1, 0)}">July</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/AUGUST'}">
+                <span th:text="${#numbers.formatDecimal(budget.august, 1, 0)}">August</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/SEPTEMBER'}">
+                <span th:text="${#numbers.formatDecimal(budget.september, 1, 0)}">September</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/OCTOBER'}">
+                <span th:text="${#numbers.formatDecimal(budget.october, 1, 0)}">October</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/NOVEMBER'}">
+                <span th:text="${#numbers.formatDecimal(budget.november, 1, 0)}">November</span>
+            </a>
+        </td>
+        <td>
+            <a href="/transaction/year/month" th:href="@{'/transactions/'+${budget.category}+'/'+${year}+'/DECEMBER'}">
+                <span th:text="${#numbers.formatDecimal(budget.december, 1, 0)}">December</span>
+            </a>
+        </td>
+        <td>
+            <span th:text="${#numbers.formatDecimal(budget.total, 1, 0)}">Total</span>
+        </td>
+        <td>
+            <span th:text="${#numbers.formatDecimal(budget.average, 1, 0)}">Average</span>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<br/>
+<div th:insert="transactions"></div>
+
+<div th:insert="footer"></div>
+</body>
+
+</html>

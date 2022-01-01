@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:insert="header"></div>
+<header>
+    <style>
+        th {
+          background-color: #87CEFA;
+          color: white;
+        }
+    </style>
+</header>
+<body>
+<div th:insert="menu"></div>
+<div th:insert="header :: title"></div>
+
+<h2>Stores</h2>
+
+<table width="100%" class="table table-hover">
+    <thead>
+    <tr>
+        <th>Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="store : ${stores}">
+        <td>
+            <a href="/store/{id}" th:href="@{'/store/'+${store.id}}"
+               th:text="${store.name}">Store</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<br/>
+
+<div th:insert="footer"></div>
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+

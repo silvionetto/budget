@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<header>
+    <style>
+        table {
+          border-collapse: collapse;
+        }
+
+        table, th, td {
+          border: 1px solid black;
+        }
+        tr:nth-child(even) {background: #FFF}
+        tr:nth-child(odd) {background: #87CEEB}
+        tr:hover {background-color: #ddd;}
+        th {
+          position: sticky;
+          top: 0px;
+          padding-top: 12px;
+          padding-bottom: 12px;
+          background-color: #87CEFA;
+          color: white;
+        }
+        td {
+          text-align: center;
+        }
+    </style>
+</header>
+
+<body>
+
+<div th:insert="header :: title"></div>
+
+<span id="transactions" th:if="${transactions != null}">
+    <table border="1" width="100%">
+        <tr>
+            <th>DATE</th>
+            <th>AMOUNT</th>
+            <th>TYPE</th>
+            <th width="30%">NOTES</th>
+        </tr>
+        <tr th:each="transaction : ${transactions}">
+            <td th:text="${transaction.date}">01-01-2019</td>
+            <td class="amount" th:text="${transaction.amount}">100</td>
+            <td th:text="${transaction.debitCredit}">Debit</td>
+            <td th:text="${transaction.notifications}" width="30%">notifications</td>
+        </tr>
+    </table>
+</span>
+
+<div th:insert="footer"></div>
+</body>
+
+</html>

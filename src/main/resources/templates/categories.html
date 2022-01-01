@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+
+<div th:insert="header"></div>
+<body>
+<div th:insert="menu"></div>
+<div th:insert="header :: title"></div>
+
+<h2>Categories</h2>
+
+<table width="100%" class="table table-hover">
+    </thead>
+    <tbody>
+    <tr th:each="category : ${categories}">
+        <td>
+            <a href="/type/category" th:href="@{'/categories/'+${category.name}}"
+               th:text="${category.name}">Category</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<br/>
+
+<div th:insert="footer"></div>
+</body>
+
+</html>
