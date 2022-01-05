@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="User" type="User"/>
+    <xs:element name="BudgetCategory" type="BudgetCategory"/>
+    <xs:element name="BudgetSubCategory" type="BudgetSubCategory"/>
+    <xs:element name="Store" type="Store"/>
+    <xs:element name="Transaction" type="Transaction"/>
+    <xs:element name="Balance" type="Balance"/>
+    <xs:element name="Budget" type="Budget"/>
+
+
+    <xs:simpleType name="BudgetType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="EXPENSE"/>
+            <xs:enumeration value="INCOME"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="BaseEntity">
+        <xs:sequence>
+            <xs:element name="id" type="xs:integer"/>
+            <xs:element name="version" type="xs:integer"/>
+            <xs:element name="lastUpdateDate" type="xs:date"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="User">
+        <xs:complexContent>
+            <xs:extension base="BaseEntity">
+                <xs:sequence>
+                    <xs:element name="login" type="xs:string"/>
+                    <xs:element name="firstName" type="xs:string"/>
+                    <xs:element name="lastName" type="xs:string"/>
+                    <xs:element name="description" type="xs:string"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="BudgetCategory">
+        <xs:complexContent>
+            <xs:extension base="BaseEntity">
+                <xs:sequence>
+                    <xs:element name="name" type="xs:string"/>
+                    <xs:element name="type" type="BudgetType"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="BudgetSubCategory">
+        <xs:complexContent>
+            <xs:extension base="BaseEntity">
+                <xs:sequence>
+                    <xs:element name="name" type="xs:string"/>
+                    <xs:element name="type" type="BudgetCategory"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="Store">
+        <xs:complexContent>
+            <xs:extension base="BaseEntity">
+                <xs:sequence>
+                    <xs:element name="name" type="xs:string"/>
+                    <xs:element name="subCategory" type="BudgetSubCategory"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="Transaction">
+        <xs:complexContent>
+            <xs:extension base="BaseEntity">
+                <xs:sequence>
+                    <xs:element name="date" type="xs:date"/>
+                    <xs:element name="store" type="Store"/>
+                    <xs:element name="account" type="xs:string"/>
+                    <xs:element name="contraAccount" type="xs:string"/>
+                    <xs:element name="code" type="xs:string"/>
+                    <xs:element name="debitCredit" type="xs:string"/>
+                    <xs:element name="amount" type="xs:decimal"/>
+                    <xs:element name="transactionType" type="xs:string"/>
+                    <xs:element name="notifications" type="xs:string"/>
+                    <xs:element name="subCategory" type="BudgetSubCategory"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="Balance">
+        <xs:complexContent>
+            <xs:extension base="BaseEntity">
+                <xs:sequence>
+                    <xs:element name="date" type="xs:date"/>
+                    <xs:element name="openingBalance" type="xs:decimal"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="Budget">
+        <xs:complexContent>
+            <xs:extension base="BaseEntity">
+                <xs:sequence>
+                    <xs:element name="category" type="xs:string"/>
+                    <xs:element name="january" type="xs:decimal"/>
+                    <xs:element name="february" type="xs:decimal"/>
+                    <xs:element name="march" type="xs:decimal"/>
+                    <xs:element name="april" type="xs:decimal"/>
+                    <xs:element name="may" type="xs:decimal"/>
+                    <xs:element name="june" type="xs:decimal"/>
+                    <xs:element name="july" type="xs:decimal"/>
+                    <xs:element name="august" type="xs:decimal"/>
+                    <xs:element name="september" type="xs:decimal"/>
+                    <xs:element name="october" type="xs:decimal"/>
+                    <xs:element name="november" type="xs:decimal"/>
+                    <xs:element name="december" type="xs:decimal"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+</xs:schema>

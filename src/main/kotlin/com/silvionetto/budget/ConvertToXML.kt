@@ -1,10 +1,14 @@
 package com.silvionetto.budget
 
+import com.silvionetto.budget.xjb.BudgetCategory
+import com.silvionetto.budget.xjb.BudgetSubCategory
+import com.silvionetto.budget.xjb.BudgetType
+import com.silvionetto.budget.xjb.Store
 import org.springframework.core.io.ClassPathResource
-import java.awt.print.Book
 import java.io.File
 import java.lang.Boolean
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.Marshaller
 import kotlin.Array
@@ -13,7 +17,7 @@ import kotlin.String
 
 fun main(args: Array<String>) {
     var inputFolder = ClassPathResource("input/store").file
-    var stores = LinkedList<Store>()
+    var stores = LinkedList<com.silvionetto.budget.xjb.Store>()
     if (inputFolder.exists()) {
         inputFolder.walk().forEach {
             if (it.isFile) {
@@ -35,13 +39,21 @@ fun main(args: Array<String>) {
                     var categoryType = match!!.groups[1]?.value
 
                     if (categoryName != null && categoryType != null) {
-                        var category = BudgetCategory(categoryName, BudgetType.valueOf(categoryType))
+                        var category = BudgetCategory()
+                        category.name = categoryName
+                        category.type = BudgetType.valueOf(categoryType)
 
                         if (subCategoryName != null) {
-                            var subCategory = BudgetSubCategory(subCategoryName, category)
+                            var subCategory = BudgetSubCategory()
+                            subCategory.name = subCategoryName
+                            subCategory.type = category
+                            //var subCategory = BudgetSubCategory(subCategoryName, category)
 
                             if (storeName != null) {
-                                var store = Store(storeName, subCategory)
+
+                                var store = Store()
+                                store.name = storeName
+                                store.subCategory = subCategory
                                 stores.add(store)
                             }
                         }
@@ -52,8 +64,12 @@ fun main(args: Array<String>) {
         }
     }
 
-    val context = JAXBContext.newInstance(Book::class.java)
+    val context = JAXBContext.newInstance(com.silvionetto.budget.xjb.Store::class.java)
     val mar: Marshaller = context.createMarshaller()
     mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE)
-    mar.marshal(stores, File("stores.xml"))
+    val runCount = AtomicInteger(0)
+    stores.forEach {
+        println(it.name)
+        mar.marshal(it, File("target/stores/stores${runCount.addAndGet(1)}.xml"))
+    }
 }

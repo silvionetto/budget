@@ -1,11 +1,16 @@
 package com.silvionetto.budget
 
+
+import com.silvionetto.budget.xjb.Store
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.core.io.ClassPathResource
+import java.io.FileReader
+import javax.xml.bind.JAXBContext
+
 
 @Configuration
 class AppConfiguration {
@@ -264,29 +269,13 @@ class AppConfiguration {
             return column.replace("'","")
         }
 
-//        fun getColumns(l : String): Map<String, String> {
-//            var line = getLine(l)
-//            var columns = LinkedHashMap<String, String>()
-//            //columns['storeName'] = getStoreName(l)
-//            //columns['transactionSide'] =
-//
-//        }
-
-
-
         var inputFolder = ClassPathResource("input/store").file
         if (inputFolder.exists()) {
             inputFolder.walk().forEach {
                 if (it.isFile) {
-                    it.forEachLine { line ->
-                        var columns = getLine(line)
-
-                        val storeName = getStoreName(line)
-                        val transactionSide = columns[1].replace("'","")
-                        val category = columns[2].replace("'","")
-                        val subCategoryName = columns[3].replace("'","")
-                        storeService.saveStore(storeName, transactionSide, subCategoryName)
-                    }
+                    val context = JAXBContext.newInstance(Store::class.java)
+                    val store = context.createUnmarshaller().unmarshal(FileReader(it)) as Store
+                    storeService.saveStore(store.name, store.subCategory.type.type.toString(), store.subCategory.name)
                 }
             }
         }
