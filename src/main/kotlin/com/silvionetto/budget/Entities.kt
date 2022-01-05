@@ -15,7 +15,7 @@ enum class TransactionSide {
 }
 
 @MappedSuperclass
-class BaseEntity(
+open class BaseEntity(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) var id: Long? = 0,
         @Version var version: Long? = 0,
         @Temporal(TemporalType.DATE) var lastUpdateDate: Date = Date()
@@ -73,19 +73,19 @@ data class Balance(
 ) : BaseEntity()
 
 class Budget(
-       val category: String,
-       var january: Double,
-       var february: Double,
-       var march: Double,
-       var april: Double,
-       var may: Double,
-       var june: Double,
-       var july: Double,
-       var august: Double,
-       var september: Double,
-       var october: Double,
-       var november: Double,
-       var december: Double
+        val category: String,
+        var january: Double,
+        var february: Double,
+        var march: Double,
+        var april: Double,
+        var may: Double,
+        var june: Double,
+        var july: Double,
+        var august: Double,
+        var september: Double,
+        var october: Double,
+        var november: Double,
+        var december: Double
 ) {
     fun getTotal(): Double {
         val months = arrayOf(january,

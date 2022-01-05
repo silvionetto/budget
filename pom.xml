@@ -15,7 +15,7 @@
 	<description>Monthly Budget</description>
 
 	<properties>
-		<java.version>13</java.version>
+		<java.version>1.8</java.version>
 		<kotlin.version>1.2.71</kotlin.version>
 	</properties>
 
@@ -106,8 +106,6 @@
 	</dependencies>
 
 	<build>
-		<sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
-		<testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -125,21 +123,57 @@
 			<plugin>
 				<groupId>org.jetbrains.kotlin</groupId>
 				<artifactId>kotlin-maven-plugin</artifactId>
-				<configuration>
-					<args>
-						<arg>-Xjsr305=strict</arg>
-					</args>
-					<compilerPlugins>
-						<plugin>spring</plugin>
-						<plugin>jpa</plugin>
-						<plugin>all-open</plugin>
-					</compilerPlugins>
-					<pluginOptions>
-						<option>all-open:annotation=javax.persistence.Entity</option>
-						<option>all-open:annotation=javax.persistence.Embeddable</option>
-						<option>all-open:annotation=javax.persistence.MappedSuperclass</option>
-					</pluginOptions>
-				</configuration>
+				<version>${kotlin.version}</version>
+				<executions>
+					<execution>
+						<id>compile</id>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration>
+							<sourceDirs>
+								<sourceDir>${project.basedir}/src/main/java</sourceDir>
+								<sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+							</sourceDirs>
+							<args>
+								<arg>-Xjsr305=strict</arg>
+							</args>
+							<compilerPlugins>
+								<plugin>spring</plugin>
+								<plugin>jpa</plugin>
+								<plugin>all-open</plugin>
+							</compilerPlugins>
+							<pluginOptions>
+								<option>all-open:annotation=javax.persistence.Entity</option>
+								<option>all-open:annotation=javax.persistence.Embeddable</option>
+								<option>all-open:annotation=javax.persistence.MappedSuperclass</option>
+							</pluginOptions>
+						</configuration>
+					</execution>
+					<execution>
+						<id>test-compile</id>
+						<goals> <goal>test-compile</goal> </goals>
+						<configuration>
+							<sourceDirs>
+								<sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
+								<sourceDir>${project.basedir}/src/test/java</sourceDir>
+							</sourceDirs>
+							<args>
+								<arg>-Xjsr305=strict</arg>
+							</args>
+							<compilerPlugins>
+								<plugin>spring</plugin>
+								<plugin>jpa</plugin>
+								<plugin>all-open</plugin>
+							</compilerPlugins>
+							<pluginOptions>
+								<option>all-open:annotation=javax.persistence.Entity</option>
+								<option>all-open:annotation=javax.persistence.Embeddable</option>
+								<option>all-open:annotation=javax.persistence.MappedSuperclass</option>
+							</pluginOptions>
+						</configuration>
+					</execution>
+				</executions>
 				<dependencies>
 					<dependency>
 						<groupId>org.jetbrains.kotlin</groupId>
@@ -154,22 +188,35 @@
 				</dependencies>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>jaxb2-maven-plugin</artifactId>
-				<version>2.5.0</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.5.1</version>
 				<executions>
+					<!-- Replacing default-compile as it is treated specially by maven -->
 					<execution>
-						<id>xjc</id>
+						<id>default-compile</id>
+						<phase>none</phase>
+					</execution>
+					<!-- Replacing default-testCompile as it is treated specially by maven -->
+					<execution>
+						<id>default-testCompile</id>
+						<phase>none</phase>
+					</execution>
+					<execution>
+						<id>java-compile</id>
+						<phase>compile</phase>
 						<goals>
-							<goal>xjc</goal>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>java-test-compile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>testCompile</goal>
 						</goals>
 					</execution>
 				</executions>
-				<configuration>
-					<source>src/main/xsd/Entities.xsd</source>
-					<packageName>com.silvionetto.budget.xjb</packageName>
-					<clearOutputDir>false</clearOutputDir>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
