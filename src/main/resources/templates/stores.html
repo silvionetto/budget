@@ -3,28 +3,31 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <div th:insert="header"></div>
-<header>
-    <style>
-        th {
-          background-color: #87CEFA;
-          color: white;
-        }
-    </style>
-</header>
 <body>
 <div th:insert="menu"></div>
 <div th:insert="header :: title"></div>
 
+<div class="container mt-3">
 <h2>Stores</h2>
 
-<table width="100%" class="table table-hover">
+<table class="table table-hover table-striped table-bordered">
     <thead>
     <tr>
         <th>Name</th>
+        <th>Category</th>
+        <th>Sub Category</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="store : ${stores}">
+        <td>
+            <a href="/store/{id}" th:href="@{'/store/'+${store.id}}"
+               th:text="${store.name}">Store</a>
+        </td>
+        <td>
+            <a href="/categories/${store.subCategory.category.name}" th:href="@{'/categories/'+${store.subCategory.category.name}}"
+               th:text="${store.subCategory.category.name}">Category</a>
+        </td>
         <td>
             <a href="/store/{id}" th:href="@{'/store/'+${store.id}}"
                th:text="${store.name}">Store</a>
@@ -34,6 +37,8 @@
 </table>
 
 <br/>
+
+</div>
 
 <div th:insert="footer"></div>
 </body>

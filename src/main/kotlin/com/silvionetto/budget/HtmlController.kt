@@ -204,6 +204,10 @@ class HtmlController() {
 
     @GetMapping("/stores")
     fun stores(model: Model): String {
+        model["previousYear"] = getPreviousYear(year)
+        model["year"] = year
+        model["nextYear"] = getNextYear(year)
+        model["title"] = title
         model["stores"] = storeRepository.findAll()
         return "stores"
     }

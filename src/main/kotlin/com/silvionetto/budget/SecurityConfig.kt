@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Bean
 @Configuration
 @EnableWebSecurity
 @PropertySource("classpath:application.properties")
-class SecurityConfig : WebSecurityConfigurerAdapter() {
+open class SecurityConfig : WebSecurityConfigurerAdapter() {
 
     val client = listOf("facebook")
 
