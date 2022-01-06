@@ -202,20 +202,9 @@ class HtmlController() {
         return next.toString()
     }
 
-//    @DeleteMapping("/store/{id}")
-//    fun deleteStore(@PathVariable id: Long) {
-//        storeRepository.deleteById(id)
-//    }
-
-    /*@PostMapping("/store/{id}")
-    fun updateStore(store: Store,
-                    @PathVariable id: Long,
-                    model: Model) : Store {
-        if (store.id != id) {
-            throw InputMismatchException("Store id: $store.id is different than $id")
-        }
-        storeRepository.findById(id).orElseThrow(Supplier { EntityNotFoundException("Store id $store.id not found!") })
-        return storeRepository.save(store)
-    }*/
-
+    @GetMapping("/stores")
+    fun stores(model: Model): String {
+        model["stores"] = storeRepository.findAll()
+        return "stores"
+    }
 }
