@@ -10,8 +10,10 @@ enum class BudgetType {
 }
 
 enum class TransactionSide {
-    Debit,
-    Credit
+    Af,
+    Bij,
+    Credit,
+    Debit
 }
 
 @MappedSuperclass

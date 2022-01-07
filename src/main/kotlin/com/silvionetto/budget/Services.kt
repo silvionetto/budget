@@ -74,7 +74,7 @@ class StoreService {
                 var category = categoryRepository.findByNameAndType("Unknown_Expense", BudgetType.EXPENSE)
                 var subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Expense", category)
                 store = Store(storeName, subCategory)
-                saveStore(store)
+                store = saveStore(store)
                 println("Store: $store, Category: $category, SubCategory: $subCategory")
             }
         }

@@ -179,6 +179,7 @@ class AppConfiguration {
         category = categoryService.saveCategory(BudgetCategory("Poupanca", BudgetType.EXPENSE))
         subCategoryService.saveSubCategory(BudgetSubCategory("Fundo de emergencia", category))
         subCategoryService.saveSubCategory(BudgetSubCategory("Transferencia para poupança", category))
+        subCategoryService.saveSubCategory(BudgetSubCategory("Investimento", category))
         subCategoryService.saveSubCategory(BudgetSubCategory("Aposentadoria", category))
         subCategoryService.saveSubCategory(BudgetSubCategory("Barco", category))
         subCategoryService.saveSubCategory(BudgetSubCategory("Joao Pedro", category))
