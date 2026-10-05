@@ -1,4 +1,13 @@
 # Budget
+
+A Spring Boot/Kotlin monthly budget application for tracking income, expenses, categories, subcategories, stores, and transactions.
+
+## Documentation
+
+- [Reverse engineering guide](docs/reverse-engineering.md) — a domain and architecture summary derived from the codebase.
+
+## Feature summary
+
 Monthly Budget
  - Include Transaction
  - Edit Transaction
