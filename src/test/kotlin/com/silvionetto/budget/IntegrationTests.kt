@@ -7,6 +7,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -25,5 +26,12 @@ class IntegrationTests {
     fun `Assert types page returns ok`() {
         mockMvc.perform(get("/types").with(user("admin").roles("USER")))
             .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `Unauthenticated requests are redirected to Google login`() {
+        mockMvc.perform(get("/"))
+            .andExpect(status().is3xxRedirection)
+            .andExpect(redirectedUrl("/oauth2/authorization/google"))
     }
 }
