@@ -1,42 +1,43 @@
 package com.silvionetto.budget
 
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
+import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
+import org.springframework.security.core.userdetails.User
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
-
+import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
 @PropertySource("classpath:application.properties")
-class SecurityConfig : WebSecurityConfigurerAdapter() {
+class SecurityConfig {
 
     val client = listOf("facebook")
 
-    override fun configure(http: HttpSecurity) {
-//        http.authorizeRequests()
-//                .anyRequest().authenticated()
-//                .and()
-//                .oauth2Login()
-        http.csrf().disable()
-                .authorizeRequests().anyRequest().authenticated()
-                .and().httpBasic()
-
+    @Bean
+    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+        http.csrf { it.disable() }
+            .authorizeHttpRequests { auth ->
+                auth.anyRequest().authenticated()
+            }
+            .httpBasic(Customizer.withDefaults())
+        return http.build()
     }
 
-    @Autowired
-    @Throws(Exception::class)
-    fun configureGlobal(authentication: AuthenticationManagerBuilder) {
-        authentication.inMemoryAuthentication()
-                .withUser("admin")
-                .password(passwordEncoder().encode("admin"))
-                .authorities("ROLE_USER")
+    @Bean
+    fun userDetailsService(): UserDetailsService {
+        val user = User.builder()
+            .username("admin")
+            .password(passwordEncoder().encode("admin"))
+            .roles("USER")
+            .build()
+        return InMemoryUserDetailsManager(user)
     }
 
     @Bean

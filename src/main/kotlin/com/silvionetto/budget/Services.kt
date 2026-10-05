@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat
 import java.time.Month
 import java.util.*
 import java.util.function.Supplier
-import javax.persistence.EntityNotFoundException
+import jakarta.persistence.EntityNotFoundException
 
 @Service
 class UserService {
@@ -44,13 +44,13 @@ class StoreService {
     }
 
     fun update(id: Long, category: String, subCategory: String, name: String): Store {
-        var store: Store = storeRepository.findById(id).orElseThrow(Supplier { EntityNotFoundException("Store id $id not found!") })
+        val store: Store = storeRepository.findById(id).orElseThrow(Supplier { EntityNotFoundException("Store id $id not found!") })
         store.name = name
-        var budgetSubCategory = subCategoryRepository.findByName(subCategory)
+        val budgetSubCategory = subCategoryRepository.findByName(subCategory)
         budgetSubCategory?.apply {
             store.subCategory = this
         }
-        var transactions = transactionRepository.findByStore(store)
+        val transactions = transactionRepository.findByStore(store)
         transactions.forEach { transaction ->
             transaction.subCategory = store.subCategory
             transactionRepository.save(transaction)
@@ -65,14 +65,14 @@ class StoreService {
             println(store)
         } else {
             if (TransactionSide.Credit == TransactionSide.valueOf(transactionSide)) {
-                var category = categoryRepository.findByNameAndType("Unknown_Income", BudgetType.INCOME)
-                var subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Income", category)
+                val category = categoryRepository.findByNameAndType("Unknown_Income", BudgetType.INCOME)
+                val subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Income", category)
                 store = Store(storeName, subCategory)
                 saveStore(store)
                 println("Store: $store, Category: $category, SubCategory: $subCategory")
             } else {
-                var category = categoryRepository.findByNameAndType("Unknown_Expense", BudgetType.EXPENSE)
-                var subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Expense", category)
+                val category = categoryRepository.findByNameAndType("Unknown_Expense", BudgetType.EXPENSE)
+                val subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Expense", category)
                 store = Store(storeName, subCategory)
                 saveStore(store)
                 println("Store: $store, Category: $category, SubCategory: $subCategory")
@@ -89,12 +89,12 @@ class StoreService {
             println(store)
         } else {
             if (BudgetType.INCOME == BudgetType.valueOf(budgetType)) {
-                var subCategory = subCategoryRepository.findByNameAndCategoryType(subCategoryName, BudgetType.INCOME)
+                val subCategory = subCategoryRepository.findByNameAndCategoryType(subCategoryName, BudgetType.INCOME)
                 store = Store(storeName, subCategory.first())
                 saveStore(store)
                 println("Store: $store, SubCategory: $subCategory, Type: Income")
             } else {
-                var subCategory = subCategoryRepository.findByNameAndCategoryType(subCategoryName, BudgetType.EXPENSE)
+                val subCategory = subCategoryRepository.findByNameAndCategoryType(subCategoryName, BudgetType.EXPENSE)
                 store = Store(storeName, subCategory.first())
                 saveStore(store)
                 println("Store: $store, SubCategory: $subCategory, Type: Expense")
@@ -149,20 +149,28 @@ class TransactionService {
     }
 
     fun getByCategoryAndMonth(category: BudgetCategory, month: String): List<Transaction> {
-        val now = Date()
-        val startDate = Date(now.year, Month.valueOf(month).value - 1, 1)
-        val endDate = Date(now.year, Month.valueOf(month).value, 1)
-        var transactions = transactionRepository.findBySubCategoryCategory(category).filter {
+        val now = Calendar.getInstance()
+        val year = now.get(Calendar.YEAR)
+        val monthValue = Month.valueOf(month).value
+        
+        val startDate = GregorianCalendar(year, monthValue - 1, 1).time
+        val endDate = GregorianCalendar(year, monthValue, 1).time
+        
+        val transactions = transactionRepository.findBySubCategoryCategory(category).filter {
             it.date.after(startDate) && it.date.before(endDate)
         }
         return transactions
     }
 
     fun getBySubCategoryAndMonth(subCategory: BudgetSubCategory, month: String): List<Transaction> {
-        val now = Date()
-        val startDate = Date(now.year, Month.valueOf(month).value - 1, 1)
-        val endDate = Date(now.year, Month.valueOf(month).value, 1)
-        var transactions = transactionRepository.findBySubCategory(subCategory).filter {
+        val now = Calendar.getInstance()
+        val year = now.get(Calendar.YEAR)
+        val monthValue = Month.valueOf(month).value
+        
+        val startDate = GregorianCalendar(year, monthValue - 1, 1).time
+        val endDate = GregorianCalendar(year, monthValue, 1).time
+        
+        val transactions = transactionRepository.findBySubCategory(subCategory).filter {
             it.date.after(startDate) && it.date.before(endDate)
         }
         return transactions
@@ -170,9 +178,10 @@ class TransactionService {
 
     fun getBySubCategoryAndYearAndMonth(subCategory: BudgetSubCategory, year: String, month: String): List<Transaction> {
         val sdf = SimpleDateFormat("yyyy-M-dd")
-        val startDate = sdf.parse("$year-${(Month.valueOf(month).value)}-1")
-        val endDate = sdf.parse("$year-${Month.valueOf(month).value + 1}-1")
-        var transactions = transactionRepository.findBySubCategory(subCategory).filter {
+        val monthValue = Month.valueOf(month).value
+        val startDate = sdf.parse("$year-$monthValue-1")
+        val endDate = sdf.parse("$year-${monthValue + 1}-1")
+        val transactions = transactionRepository.findBySubCategory(subCategory).filter {
             it.date.after(startDate) && it.date.before(endDate)
         }
         return transactions
@@ -193,13 +202,15 @@ class BudgetService {
     fun getBudgetByType(): List<Budget> {
         val budgets = mutableListOf<Budget>()
 
-        var budgetTotal = Budget(Constants.TOTAL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        val budgetTotal = Budget(Constants.TOTAL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
         var budget = Budget(Constants.INCOME, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         var transactions = transactionRepository.findByDebitCredit(Constants.DEBIT)
 
-        transactions?.forEach {
-            when ((it.date.month + 1)) {
+        transactions.forEach {
+            val calendar = Calendar.getInstance()
+            calendar.time = it.date
+            when (calendar.get(Calendar.MONTH) + 1) {
                 1 -> budget.january += it.amount
                 2 -> budget.february += it.amount
                 3 -> budget.march += it.amount
@@ -215,27 +226,27 @@ class BudgetService {
             }
         }
 
-        transactions?.apply {
-            budgets.add(budget)
-            budgetTotal.january += budget.january
-            budgetTotal.february += budget.february
-            budgetTotal.march += budget.march
-            budgetTotal.april += budget.april
-            budgetTotal.may += budget.may
-            budgetTotal.june += budget.june
-            budgetTotal.july += budget.july
-            budgetTotal.august += budget.august
-            budgetTotal.september += budget.september
-            budgetTotal.october += budget.october
-            budgetTotal.november += budget.november
-            budgetTotal.december += budget.december
-        }
+        budgets.add(budget)
+        budgetTotal.january += budget.january
+        budgetTotal.february += budget.february
+        budgetTotal.march += budget.march
+        budgetTotal.april += budget.april
+        budgetTotal.may += budget.may
+        budgetTotal.june += budget.june
+        budgetTotal.july += budget.july
+        budgetTotal.august += budget.august
+        budgetTotal.september += budget.september
+        budgetTotal.october += budget.october
+        budgetTotal.november += budget.november
+        budgetTotal.december += budget.december
 
         budget = Budget(Constants.EXPENSE, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         transactions = transactionRepository.findByDebitCredit(Constants.CREDIT)
 
-        transactions?.forEach {
-            when ((it.date.month + 1)) {
+        transactions.forEach {
+            val calendar = Calendar.getInstance()
+            calendar.time = it.date
+            when (calendar.get(Calendar.MONTH) + 1) {
                 1 -> budget.january += it.amount
                 2 -> budget.february += it.amount
                 3 -> budget.march += it.amount
@@ -251,21 +262,19 @@ class BudgetService {
             }
         }
 
-        transactions?.apply {
-            budgets.add(budget)
-            budgetTotal.january -= budget.january
-            budgetTotal.february -= budget.february
-            budgetTotal.march -= budget.march
-            budgetTotal.april -= budget.april
-            budgetTotal.may -= budget.may
-            budgetTotal.june -= budget.june
-            budgetTotal.july -= budget.july
-            budgetTotal.august -= budget.august
-            budgetTotal.september -= budget.september
-            budgetTotal.october -= budget.october
-            budgetTotal.november -= budget.november
-            budgetTotal.december -= budget.december
-        }
+        budgets.add(budget)
+        budgetTotal.january -= budget.january
+        budgetTotal.february -= budget.february
+        budgetTotal.march -= budget.march
+        budgetTotal.april -= budget.april
+        budgetTotal.may -= budget.may
+        budgetTotal.june -= budget.june
+        budgetTotal.july -= budget.july
+        budgetTotal.august -= budget.august
+        budgetTotal.september -= budget.september
+        budgetTotal.october -= budget.october
+        budgetTotal.november -= budget.november
+        budgetTotal.december -= budget.december
 
         budgets.add(budgetTotal)
 
@@ -276,7 +285,7 @@ class BudgetService {
         // Get all transactions from the year
         // Split by category and subcategory / month
 
-        var budgets = mutableListOf<Budget>()
+        val budgets = mutableListOf<Budget>()
         val categories = categoryRepository.findAll()
         categories.forEach { category ->
             budgets.add(getBudget(year, category))
@@ -331,7 +340,9 @@ class BudgetService {
         val transactions = transactionRepository.findByDebitCreditAndDateBetween(Constants.CREDIT, startDate, endDate)
         val budget = Budget(Constants.INCOME, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         transactions.forEach {
-            when ((it.date.month + 1)) {
+            val calendar = Calendar.getInstance()
+            calendar.time = it.date
+            when (calendar.get(Calendar.MONTH) + 1) {
                 1 -> budget.january += it.amount
                 2 -> budget.february += it.amount
                 3 -> budget.march += it.amount
@@ -357,7 +368,9 @@ class BudgetService {
         val transactions = transactionRepository.findByDebitCreditAndDateBetween(Constants.DEBIT, startDate, endDate)
         val budget = Budget(Constants.EXPENSE, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         transactions.forEach {
-            when ((it.date.month + 1)) {
+            val calendar = Calendar.getInstance()
+            calendar.time = it.date
+            when (calendar.get(Calendar.MONTH) + 1) {
                 1 -> budget.january += it.amount
                 2 -> budget.february += it.amount
                 3 -> budget.march += it.amount
@@ -383,7 +396,9 @@ class BudgetService {
         val transactions = transactionRepository.findBySubCategoryCategoryAndDateBetween(category, startDate, endDate)
         val budget = Budget(category.name, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         transactions.forEach {
-            when ((it.date.month + 1)) {
+            val calendar = Calendar.getInstance()
+            calendar.time = it.date
+            when (calendar.get(Calendar.MONTH) + 1) {
                 1 -> budget.january += it.amount
                 2 -> budget.february += it.amount
                 3 -> budget.march += it.amount

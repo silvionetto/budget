@@ -1,8 +1,8 @@
 package com.silvionetto.budget
 
+import jakarta.persistence.*
 import java.io.Serializable
 import java.util.*
-import javax.persistence.*
 
 enum class BudgetType {
     EXPENSE,
@@ -15,13 +15,14 @@ enum class TransactionSide {
 }
 
 @MappedSuperclass
-class BaseEntity(
-        @Id @GeneratedValue(strategy = GenerationType.AUTO) var id: Long? = 0,
-        @Version var version: Long? = 0,
-        @Temporal(TemporalType.DATE) var lastUpdateDate: Date = Date()
+open class BaseEntity(
+    @Id @GeneratedValue(strategy = GenerationType.AUTO) var id: Long? = 0,
+    @Version var version: Long? = 0,
+    @Temporal(TemporalType.DATE) var lastUpdateDate: Date = Date()
 ) : Serializable
 
 @Entity
+@Table(name = "users")
 data class User(
         var login: String,
         var firstname: String,
