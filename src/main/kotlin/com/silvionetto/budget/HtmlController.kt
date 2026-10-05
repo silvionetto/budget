@@ -11,10 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
-import java.time.Month
-import java.util.*
 import java.util.function.Supplier
-import javax.persistence.EntityNotFoundException
+import jakarta.persistence.EntityNotFoundException
 
 @Controller
 @PropertySource("classpath:app.properties")
@@ -142,7 +140,7 @@ class HtmlController() {
 
     @GetMapping("/store/{id}")
     fun store(@PathVariable id: Long, model: Model): String {
-        var store = storeRepository.findById(id.toLong()).orElseThrow(Supplier { EntityNotFoundException("Store id $id not found!") })
+        val store = storeRepository.findById(id.toLong()).orElseThrow(Supplier { EntityNotFoundException("Store id $id not found!") })
         store.apply {
             model["store"] = this
             model["title"] = name
@@ -161,9 +159,9 @@ class HtmlController() {
                  @RequestParam category: String,
                  @RequestParam subCategory: String,
                  @PathVariable id: Long, model: Model): String {
-        var store: Store = storeService.update(id, category, subCategory, name)
-        var budgetSubCategory: BudgetSubCategory = store.subCategory
-        var budgetCategory: BudgetCategory = budgetSubCategory.category
+        val store: Store = storeService.update(id, category, subCategory, name)
+        val budgetSubCategory: BudgetSubCategory = store.subCategory
+        val budgetCategory: BudgetCategory = budgetSubCategory.category
         model["title"] = store.name
         model["categories"] = categoryRepository.findByType(budgetCategory.type)
         model["subcategories"] = subCategoryRepository.findByCategoryType(budgetCategory.type)
@@ -193,12 +191,12 @@ class HtmlController() {
     }
 
     fun getPreviousYear(year: String): String {
-        var previousYear = year.toInt() - 1
+        val previousYear = year.toInt() - 1
         return previousYear.toString()
     }
 
     fun getNextYear(year: String): String {
-        var next = year.toInt() + 1
+        val next = year.toInt() + 1
         return next.toString()
     }
 

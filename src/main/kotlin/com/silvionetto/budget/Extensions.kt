@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-fun String.toSlug() = toLowerCase()
+fun String.toSlug() = lowercase()
         .replace("\n", " ")
         .replace("[^a-z\\d\\s]".toRegex(), " ")
         .split(" ")

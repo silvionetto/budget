@@ -274,12 +274,13 @@ class AppConfiguration {
 
 
 
-        var inputFolder = ClassPathResource("input/store").file
-        if (inputFolder.exists()) {
+        val storeResource = ClassPathResource("input/store")
+        if (storeResource.exists()) {
+            val inputFolder = storeResource.file
             inputFolder.walk().forEach {
                 if (it.isFile) {
                     it.forEachLine { line ->
-                        var columns = getLine(line)
+                        val columns = getLine(line)
 
                         val storeName = getStoreName(line)
                         val transactionSide = columns[1].replace("'","")
@@ -291,8 +292,9 @@ class AppConfiguration {
             }
         }
 
-        inputFolder = ClassPathResource("input/extract").file
-        if (inputFolder.exists()) {
+        val extractResource = ClassPathResource("input/extract")
+        if (extractResource.exists()) {
+            val inputFolder = extractResource.file
             inputFolder.walk().forEach {
                 if (it.isFile) {
                     var lineNumber: Int = "0".toInt()
