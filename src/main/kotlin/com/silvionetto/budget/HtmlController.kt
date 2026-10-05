@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
+import java.time.Year
 import java.util.function.Supplier
 import jakarta.persistence.EntityNotFoundException
 
@@ -43,14 +44,8 @@ class HtmlController() {
     @Value("title")
     lateinit var title: String
 
-    @Value("year")
-    lateinit var year: String
-
-    @Value("previousYear")
-    lateinit var previousYear: String
-
-    @Value("nextYear")
-    lateinit var nextYear: String
+    private val year: String
+        get() = Year.now().value.toString()
 
     @GetMapping("/")
     fun home(model: Model): String {
