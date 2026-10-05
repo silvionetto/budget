@@ -4,9 +4,23 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 import java.util.*
 
+interface UploadedDocumentSummary {
+    val id: Long?
+    val fileName: String
+    val fileSize: Long
+    val uploadedAt: Date
+}
+
 @Repository
 interface UserRepository : CrudRepository<User, Long> {
     fun findByLogin(login: String): User?
+}
+
+@Repository
+interface UploadedDocumentRepository : CrudRepository<UploadedDocument, Long> {
+    fun findAllByOwnerEmailOrderByUploadedAtDesc(ownerEmail: String): List<UploadedDocument>
+    fun findAllProjectedByOwnerEmailOrderByUploadedAtDesc(ownerEmail: String): List<UploadedDocumentSummary>
+    fun findByIdAndOwnerEmail(id: Long, ownerEmail: String): UploadedDocument?
 }
 
 @Repository

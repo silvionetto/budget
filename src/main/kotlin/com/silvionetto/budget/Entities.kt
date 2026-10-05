@@ -73,6 +73,17 @@ data class Balance(
         var openingBalance: Double
 ) : BaseEntity()
 
+@Entity
+@Table(name = "uploaded_documents")
+data class UploadedDocument(
+        @Column(nullable = false, length = 320) var ownerEmail: String,
+        @Column(nullable = false, length = 255) var fileName: String,
+        @Column(nullable = false, length = 100) var contentType: String,
+        @Column(nullable = false) var fileSize: Long,
+        @Temporal(TemporalType.TIMESTAMP) @Column(nullable = false) var uploadedAt: Date,
+        @Lob @Column(nullable = false) var content: ByteArray
+) : BaseEntity()
+
 class Budget(
        val category: String,
        var january: Double,
