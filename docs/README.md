@@ -10,7 +10,6 @@ This folder is organized for fast retrieval by both humans and LLMs working on t
 - Budget logic: [implementation/budget-calculation.md](implementation/budget-calculation.md)
 - Routes and controllers: [implementation/routes-and-controllers.md](implementation/routes-and-controllers.md)
 - Source map: [references/source-map.md](references/source-map.md)
-- Legacy reverse-engineering write-up: [reverse-engineering.md](reverse-engineering.md)
 
 ## Document map
 
