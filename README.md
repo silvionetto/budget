@@ -6,6 +6,20 @@ A Spring Boot/Kotlin monthly budget application for tracking income, expenses, c
 
 - [Reverse engineering guide](docs/reverse-engineering.md) — a domain and architecture summary derived from the codebase.
 
+## PostgreSQL database
+
+The application uses PostgreSQL by default. Start the database from the repository root:
+
+```powershell
+docker compose up -d postgres
+```
+
+The Compose service stores database files in the `budget-postgres-data` named volume. Start the application with `.\mvnw.cmd spring-boot:run`; Flyway applies versioned SQL migrations from `src/main/resources/db/migration`, and Hibernate validates the resulting schema. The published host port defaults to `5432`; set `POSTGRES_PORT` to a different port if that port is already in use. The application uses the same `POSTGRES_PORT` value by default.
+
+For local development, the database name, username, and password default to `budget`. Override them with `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` before starting Compose, and set matching `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD` values for the application. Replace the development credentials with managed secrets in production.
+
+Stop the database without deleting its records using `docker compose stop postgres` or `docker compose down`. Do not use `docker compose down --volumes` unless you intend to permanently delete the database.
+
 ## Feature summary
 
 Monthly Budget

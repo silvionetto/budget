@@ -16,7 +16,7 @@ enum class TransactionSide {
 
 @MappedSuperclass
 open class BaseEntity(
-    @Id @GeneratedValue(strategy = GenerationType.AUTO) var id: Long? = 0,
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = 0,
     @Version var version: Long? = 0,
     @Temporal(TemporalType.DATE) var lastUpdateDate: Date = Date()
 ) : Serializable
@@ -52,6 +52,7 @@ data class Store(
 ) : BaseEntity()
 
 @Entity
+@Table(name = "budget_transactions")
 data class Transaction(
         var date: Date,
         @ManyToOne var store: Store,
@@ -61,8 +62,7 @@ data class Transaction(
         var debitCredit: String,
         var amount: Double,
         var transactionType: String,
-        @Lob
-        @Column(name="notifications", length=512)
+        @Column(name = "notifications", length = 512)
         var notifications: String,
         @ManyToOne var subCategory: BudgetSubCategory
 ) : BaseEntity()
@@ -81,7 +81,7 @@ data class UploadedDocument(
         @Column(nullable = false, length = 100) var contentType: String,
         @Column(nullable = false) var fileSize: Long,
         @Temporal(TemporalType.TIMESTAMP) @Column(nullable = false) var uploadedAt: Date,
-        @Lob @Column(nullable = false) var content: ByteArray
+        @Column(nullable = false) var content: ByteArray
 ) : BaseEntity()
 
 class Budget(
