@@ -1,47 +1,38 @@
 package com.silvionetto.budget
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.PropertySource
-import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.core.userdetails.User
-import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService
+import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-@PropertySource("classpath:application.properties")
 class SecurityConfig {
 
-    val client = listOf("facebook")
-
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
-        http.csrf { it.disable() }
-            .authorizeHttpRequests { auth ->
-                auth.anyRequest().authenticated()
+    fun filterChain(
+        http: HttpSecurity,
+        adminOidcUserService: OAuth2UserService<OidcUserRequest, OidcUser>
+    ): SecurityFilterChain {
+        http
+            .authorizeHttpRequests { auth -> auth.anyRequest().authenticated() }
+            .oauth2Login { oauth2 ->
+                oauth2.userInfoEndpoint { userInfo ->
+                    userInfo.oidcUserService(adminOidcUserService)
+                }
             }
-            .httpBasic(Customizer.withDefaults())
         return http.build()
     }
 
     @Bean
-    fun userDetailsService(): UserDetailsService {
-        val user = User.builder()
-            .username("admin")
-            .password(passwordEncoder().encode("admin"))
-            .roles("USER")
-            .build()
-        return InMemoryUserDetailsManager(user)
-    }
-
-    @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return BCryptPasswordEncoder()
+    fun adminOidcUserService(
+        @Value("\${app.admin-email}") adminEmail: String
+    ): OAuth2UserService<OidcUserRequest, OidcUser> {
+        return AdminOidcUserService(adminEmail)
     }
 }

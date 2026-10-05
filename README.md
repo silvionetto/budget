@@ -27,6 +27,21 @@ Stores
 
 Reports
 
+## Google sign-in
+
+The application uses Google OAuth2 login and permits only the verified Google account whose email matches `app.admin-email` in `src/main/resources/application.properties`.
+
+1. Create a Google OAuth 2.0 web application client and add `http://localhost:8080/login/oauth2/code/google` as an authorized redirect URI.
+2. Set the client credentials in the environment before starting the app. In PowerShell:
+
+   ```powershell
+   $env:GOOGLE_CLIENT_ID = "your-client-id"
+   $env:GOOGLE_CLIENT_SECRET = "your-client-secret"
+   .\mvnw.cmd spring-boot:run
+   ```
+
+Opening the app redirects unauthenticated visitors to the Google sign-in page. A successful Google sign-in is accepted only for the configured admin email; do not commit OAuth client credentials.
+
 # Category
   - name: String
   - type: Enum{'Expense','Income'}
