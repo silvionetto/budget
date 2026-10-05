@@ -33,3 +33,4 @@ build/
 
 ### Personal Files ###
 /src/main/resources/input/
+.env
