@@ -34,9 +34,17 @@
         <tr th:each="document : ${documents}">
             <td th:text="${document.fileName}">movements.csv</td>
             <td th:text="${#dates.format(document.uploadedAt, 'yyyy-MM-dd HH:mm')}">2026-01-01 12:00</td>
-            <td th:text="${document.fileSize + ' bytes'}">100 bytes</td>
+            <td th:text="${document.fileSize + ' bytes' + (document.sourceFileAvailable ? '' : ' (CSV removed)')}">100 bytes</td>
             <td>
-                <a th:href="@{'/documents/' + ${document.id} + '/download'}">Download</a>
+                <a th:if="${document.sourceFileAvailable}" th:href="@{'/documents/' + ${document.id} + '/download'}">Download</a>
+                <form class="d-inline" method="post" th:action="@{'/documents/' + ${document.id} + '/process'}">
+                    <button class="btn btn-sm btn-primary" type="submit">Process</button>
+                </form>
+                <form class="d-inline" method="post" th:if="${document.sourceFileAvailable}"
+                      th:action="@{'/documents/' + ${document.id} + '/delete-source'}"
+                      onsubmit="return confirm('Delete the original CSV file? Saved movements will be kept.');">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete CSV file</button>
+                </form>
             </td>
         </tr>
         </tbody>

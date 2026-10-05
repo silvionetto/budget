@@ -67,14 +67,12 @@ class StoreService {
             if (TransactionSide.Credit == TransactionSide.valueOf(transactionSide)) {
                 val category = categoryRepository.findByNameAndType("Unknown_Income", BudgetType.INCOME)
                 val subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Income", category)
-                store = Store(storeName, subCategory)
-                saveStore(store)
+                store = saveStore(Store(storeName, subCategory))
                 println("Store: $store, Category: $category, SubCategory: $subCategory")
             } else {
                 val category = categoryRepository.findByNameAndType("Unknown_Expense", BudgetType.EXPENSE)
                 val subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Expense", category)
-                store = Store(storeName, subCategory)
-                saveStore(store)
+                store = saveStore(Store(storeName, subCategory))
                 println("Store: $store, Category: $category, SubCategory: $subCategory")
             }
         }
@@ -90,13 +88,11 @@ class StoreService {
         } else {
             if (BudgetType.INCOME == BudgetType.valueOf(budgetType)) {
                 val subCategory = subCategoryRepository.findByNameAndCategoryType(subCategoryName, BudgetType.INCOME)
-                store = Store(storeName, subCategory.first())
-                saveStore(store)
+                store = saveStore(Store(storeName, subCategory.first()))
                 println("Store: $store, SubCategory: $subCategory, Type: Income")
             } else {
                 val subCategory = subCategoryRepository.findByNameAndCategoryType(subCategoryName, BudgetType.EXPENSE)
-                store = Store(storeName, subCategory.first())
-                saveStore(store)
+                store = saveStore(Store(storeName, subCategory.first()))
                 println("Store: $store, SubCategory: $subCategory, Type: Expense")
             }
         }
