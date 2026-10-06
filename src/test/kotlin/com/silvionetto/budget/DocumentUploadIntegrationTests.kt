@@ -367,8 +367,8 @@ class DocumentUploadIntegrationTests @Autowired constructor(
     private fun ensureUnknownExpenseCategory() {
         val category = categoryRepository.findByName("Unknown_Expense")
                 ?: categoryRepository.save(BudgetCategory("Unknown_Expense", BudgetType.EXPENSE))
-        if (subCategoryRepository.findByName("Unknown_Expense") == null) {
-            subCategoryRepository.save(BudgetSubCategory("Unknown_Expense", category))
+        if (subCategoryRepository.findByNameAndCategoryName("Unknown_Expense", category.name) == null) {
+            subCategoryRepository.save(BudgetSubCategory("Unknown_Expense", category.name))
         }
     }
 }

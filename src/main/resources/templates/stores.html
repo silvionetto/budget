@@ -21,6 +21,8 @@
     <thead>
     <tr>
         <th>Name</th>
+        <th>Category</th>
+        <th>Subcategory</th>
     </tr>
     </thead>
     <tbody>
@@ -29,6 +31,8 @@
             <a href="/store/{id}" th:href="@{'/store/'+${store.id}}"
                th:text="${store.name}">Store</a>
         </td>
+        <td th:text="${store.categoryName}">Category</td>
+        <td th:text="${store.subCategoryName}">Subcategory</td>
     </tr>
     </tbody>
 </table>
@@ -39,7 +43,6 @@
 </body>
 
 </html>
-
 
 
 

@@ -7,6 +7,7 @@ import java.time.Month
 import java.util.*
 import java.util.function.Supplier
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class UserService {
@@ -33,9 +34,6 @@ class StoreService {
     @Autowired
     lateinit var subCategoryRepository: SubCategoryRepository
 
-    @Autowired
-    lateinit var transactionRepository: TransactionRepository
-
     fun saveStore(store: Store): Store {
         if (storeRepository.findByName(store.name) == null) {
             return storeRepository.save(store)
@@ -43,22 +41,15 @@ class StoreService {
         return store
     }
 
-    fun update(id: Long, category: String, subCategoryId: Long, name: String): Store {
+    fun update(id: Long, categoryName: String, subCategoryName: String, name: String): Store {
         val store: Store = storeRepository.findById(id).orElseThrow(Supplier { EntityNotFoundException("Store id $id not found!") })
+        val category = categoryRepository.findByName(categoryName)
+                ?: throw EntityNotFoundException("Category $categoryName not found!")
+        val subCategory = subCategoryRepository.findByNameAndCategoryName(subCategoryName, categoryName)
+                ?: throw IllegalArgumentException("Invalid category/subcategory combination")
         store.name = name
-        val budgetCategory = categoryRepository.findByName(category)
-                ?: throw EntityNotFoundException("Category $category not found!")
-        val budgetSubCategory = subCategoryRepository.findById(subCategoryId)
-                .orElseThrow(Supplier { EntityNotFoundException("SubCategory id $subCategoryId not found!") })
-        if (budgetSubCategory.category.id != budgetCategory.id) {
-            throw IllegalArgumentException("Invalid category/subcategory combination")
-        }
-        store.subCategory = budgetSubCategory
-        val transactions = transactionRepository.findByStore(store)
-        transactions.forEach { transaction ->
-            transaction.subCategory = store.subCategory
-            transactionRepository.save(transaction)
-        }
+        store.categoryName = category.name
+        store.subCategoryName = subCategory.name
         return storeRepository.save(store)
     }
 
@@ -69,14 +60,18 @@ class StoreService {
             println(store)
         } else {
             if (TransactionSide.Credit == TransactionSide.valueOf(transactionSide)) {
-                val category = categoryRepository.findByNameAndType("Unknown_Income", BudgetType.INCOME)
-                val subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Income", category)
-                store = saveStore(Store(storeName, subCategory))
+                val category = categoryRepository.findByName("Unknown_Income")
+                        ?: throw EntityNotFoundException("Category Unknown_Income not found!")
+                val subCategory = subCategoryRepository.findByNameAndCategoryName("Unknown_Income", category.name)
+                        ?: throw EntityNotFoundException("Subcategory Unknown_Income not found!")
+                store = saveStore(Store(storeName, category.name, subCategory.name))
                 println("Store: $store, Category: $category, SubCategory: $subCategory")
             } else {
-                val category = categoryRepository.findByNameAndType("Unknown_Expense", BudgetType.EXPENSE)
-                val subCategory = subCategoryRepository.findByNameAndCategory("Unknown_Expense", category)
-                store = saveStore(Store(storeName, subCategory))
+                val category = categoryRepository.findByName("Unknown_Expense")
+                        ?: throw EntityNotFoundException("Category Unknown_Expense not found!")
+                val subCategory = subCategoryRepository.findByNameAndCategoryName("Unknown_Expense", category.name)
+                        ?: throw EntityNotFoundException("Subcategory Unknown_Expense not found!")
+                store = saveStore(Store(storeName, category.name, subCategory.name))
                 println("Store: $store, Category: $category, SubCategory: $subCategory")
             }
         }
@@ -90,15 +85,13 @@ class StoreService {
         if (store != null) {
             println(store)
         } else {
-            if (BudgetType.INCOME == BudgetType.valueOf(budgetType)) {
-                val subCategory = subCategoryRepository.findByNameAndCategoryType(subCategoryName, BudgetType.INCOME)
-                store = saveStore(Store(storeName, subCategory.first()))
-                println("Store: $store, SubCategory: $subCategory, Type: Income")
-            } else {
-                val subCategory = subCategoryRepository.findByNameAndCategoryType(subCategoryName, BudgetType.EXPENSE)
-                store = saveStore(Store(storeName, subCategory.first()))
-                println("Store: $store, SubCategory: $subCategory, Type: Expense")
-            }
+            val type = BudgetType.valueOf(budgetType)
+            val categoryNames = categoryRepository.findByType(type).map { it.name }
+            val subCategory = categoryNames.flatMap(subCategoryRepository::findByCategoryName)
+                    .firstOrNull { it.name == subCategoryName }
+                    ?: throw EntityNotFoundException("Subcategory $subCategoryName not found for type $type!")
+            store = saveStore(Store(storeName, subCategory.categoryName, subCategory.name))
+            println("Store: $store, SubCategory: $subCategory, Type: $type")
         }
 
         return store
@@ -110,11 +103,43 @@ class CategoryService {
     @Autowired
     lateinit var categoryRepository: CategoryRepository
 
+    @Autowired
+    lateinit var subCategoryRepository: SubCategoryRepository
+
     fun saveCategory(category: BudgetCategory): BudgetCategory {
-        if (categoryRepository.findByName(category.name) == null) {
-            return categoryRepository.save(category)
+        require(category.name.isNotBlank()) { "Category name is required." }
+        require(category.name.length <= 255) { "Category name must be 255 characters or fewer." }
+        if (categoryRepository.findByName(category.name) != null) {
+            throw IllegalArgumentException("A category with this name already exists.")
         }
-        return category
+        return categoryRepository.save(category)
+    }
+
+    @Transactional
+    fun update(id: Long, name: String, type: BudgetType): BudgetCategory {
+        require(name.isNotBlank()) { "Category name is required." }
+        require(name.length <= 255) { "Category name must be 255 characters or fewer." }
+        val category = categoryRepository.findById(id)
+                .orElseThrow(Supplier { EntityNotFoundException("Category id $id not found!") })
+        val duplicate = categoryRepository.findByName(name)
+        if (duplicate != null && duplicate.id != id) {
+            throw IllegalArgumentException("A category with this name already exists.")
+        }
+        val oldName = category.name
+        category.name = name
+        category.type = type
+        if (oldName != name) {
+            subCategoryRepository.findByCategoryName(oldName).forEach { it.categoryName = name }
+        }
+        return categoryRepository.save(category)
+    }
+
+    @Transactional
+    fun delete(id: Long) {
+        val category = categoryRepository.findById(id)
+                .orElseThrow(Supplier { EntityNotFoundException("Category id $id not found!") })
+        subCategoryRepository.findByCategoryName(category.name).forEach(subCategoryRepository::delete)
+        categoryRepository.delete(category)
     }
 }
 
@@ -123,11 +148,38 @@ class SubCategoryService {
     @Autowired
     lateinit var subCategoryRepository: SubCategoryRepository
 
+    @Autowired
+    lateinit var categoryRepository: CategoryRepository
+
     fun saveSubCategory(subCategory: BudgetSubCategory): BudgetSubCategory {
-        if (subCategoryRepository.findByName(subCategory.name) == null) {
-            return subCategoryRepository.save(subCategory)
+        require(subCategory.name.isNotBlank()) { "Subcategory name is required." }
+        require(subCategory.name.length <= 255) { "Subcategory name must be 255 characters or fewer." }
+        require(categoryRepository.findByName(subCategory.categoryName) != null) { "Select an existing category." }
+        if (subCategoryRepository.findByNameAndCategoryName(subCategory.name, subCategory.categoryName) != null) {
+            throw IllegalArgumentException("A subcategory with this name already exists in this category.")
         }
-        return subCategory
+        return subCategoryRepository.save(subCategory)
+    }
+
+    fun update(id: Long, name: String, categoryName: String): BudgetSubCategory {
+        require(name.isNotBlank()) { "Subcategory name is required." }
+        require(name.length <= 255) { "Subcategory name must be 255 characters or fewer." }
+        require(categoryRepository.findByName(categoryName) != null) { "Select an existing category." }
+        val subCategory = subCategoryRepository.findById(id)
+                .orElseThrow(Supplier { EntityNotFoundException("Subcategory id $id not found!") })
+        val duplicate = subCategoryRepository.findByNameAndCategoryName(name, categoryName)
+        if (duplicate != null && duplicate.id != id) {
+            throw IllegalArgumentException("A subcategory with this name already exists in the selected category.")
+        }
+        subCategory.name = name
+        subCategory.categoryName = categoryName
+        return subCategoryRepository.save(subCategory)
+    }
+
+    fun delete(id: Long) {
+        val subCategory = subCategoryRepository.findById(id)
+                .orElseThrow(Supplier { EntityNotFoundException("Subcategory id $id not found!") })
+        subCategoryRepository.delete(subCategory)
     }
 }
 
@@ -156,35 +208,15 @@ class TransactionService {
         val startDate = GregorianCalendar(year, monthValue - 1, 1).time
         val endDate = GregorianCalendar(year, monthValue, 1).time
         
-        val transactions = transactionRepository.findBySubCategoryCategory(category).filter {
-            it.date.after(startDate) && it.date.before(endDate)
-        }
-        return transactions
+        return transactionRepository.findByCategoryNameAndDateBetween(category.name, startDate, endDate)
     }
 
-    fun getBySubCategoryAndMonth(subCategory: BudgetSubCategory, month: String): List<Transaction> {
-        val now = Calendar.getInstance()
-        val year = now.get(Calendar.YEAR)
-        val monthValue = Month.valueOf(month).value
-        
-        val startDate = GregorianCalendar(year, monthValue - 1, 1).time
-        val endDate = GregorianCalendar(year, monthValue, 1).time
-        
-        val transactions = transactionRepository.findBySubCategory(subCategory).filter {
-            it.date.after(startDate) && it.date.before(endDate)
-        }
-        return transactions
-    }
-
-    fun getBySubCategoryAndYearAndMonth(subCategory: BudgetSubCategory, year: String, month: String): List<Transaction> {
+    fun getByCategoryAndYearAndMonth(categoryName: String, year: String, month: String): List<Transaction> {
         val sdf = SimpleDateFormat("yyyy-M-dd")
         val monthValue = Month.valueOf(month).value
         val startDate = sdf.parse("$year-$monthValue-1")
         val endDate = sdf.parse("$year-${monthValue + 1}-1")
-        val transactions = transactionRepository.findBySubCategory(subCategory).filter {
-            it.date.after(startDate) && it.date.before(endDate)
-        }
-        return transactions
+        return transactionRepository.findByCategoryNameAndDateBetween(categoryName, startDate, endDate)
     }
 }
 
@@ -195,9 +227,6 @@ class BudgetService {
 
     @Autowired
     lateinit var categoryRepository: CategoryRepository
-
-    @Autowired
-    lateinit var subCategoryRepository: SubCategoryRepository
 
     fun getBudgetByType(): List<Budget> {
         val budgets = mutableListOf<Budget>()
@@ -393,7 +422,7 @@ class BudgetService {
         val sdf = SimpleDateFormat("yyyy-MM-dd")
         val startDate = sdf.parse("$year-01-01")
         val endDate = sdf.parse(String.format("%s-01-01", Integer.valueOf(year) + 1))
-        val transactions = transactionRepository.findBySubCategoryCategoryAndDateBetween(category, startDate, endDate)
+        val transactions = transactionRepository.findByCategoryNameAndDateBetween(category.name, startDate, endDate)
         val budget = Budget(category.name, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         transactions.forEach {
             val calendar = Calendar.getInstance()

@@ -41,16 +41,14 @@ data class BudgetCategory(
 @Entity
 data class BudgetSubCategory(
         var name: String,
-        @ManyToOne
-        @JoinColumn(name = "category_id")
-        var category: BudgetCategory
+        var categoryName: String
 ) : BaseEntity()
 
 @Entity
 data class Store(
         @Column(unique = true) var name: String,
-        @ManyToOne
-        var subCategory: BudgetSubCategory
+        var categoryName: String,
+        var subCategoryName: String
 ) : BaseEntity()
 
 @Entity
@@ -66,7 +64,8 @@ data class Transaction(
         var transactionType: String,
         @Column(name = "notifications", length = 512)
         var notifications: String,
-        @ManyToOne var subCategory: BudgetSubCategory
+        var categoryName: String,
+        var subCategoryName: String
 ) : BaseEntity()
 
 @Entity

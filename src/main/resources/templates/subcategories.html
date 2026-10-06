@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:insert="header"></div>
+<body>
+<div th:insert="menu"></div>
+<main class="container my-4">
+    <div th:insert="header :: title"></div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Subcategories</h1>
+        <a class="btn btn-outline-secondary" th:href="@{/categories}">Back to categories</a>
+    </div>
+    <p class="text-muted">Category: <strong th:text="${category.name}">Category</strong></p>
+
+    <div class="alert alert-success" role="alert" th:if="${success}" th:text="${success}"></div>
+    <div class="alert alert-danger" role="alert" th:if="${error}" th:text="${error}"></div>
+
+    <section class="card mb-4">
+        <div class="card-header"><h2 class="h5 mb-0">Create subcategory</h2></div>
+        <div class="card-body">
+            <form th:action="@{'/categories/'+${category.id}+'/subcategories'}" method="post" class="form-row align-items-end">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="form-group col-md-9">
+                    <label for="new-subcategory-name">Name</label>
+                    <input id="new-subcategory-name" name="name" class="form-control" maxlength="255" required>
+                </div>
+                <div class="form-group col-md-3">
+                    <button type="submit" class="btn btn-primary btn-block">Add subcategory</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <p th:if="${#lists.isEmpty(subcategories)}" class="text-muted">This category has no subcategories yet.</p>
+    <section class="card mb-3" th:each="subcategory : ${subcategories}">
+        <div class="card-body">
+            <form th:action="@{'/subcategories/'+${subcategory.id}+'/update'}" method="post" class="form-row align-items-end">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="form-group col-md-5">
+                    <label th:for="${'subcategory-name-'+subcategory.id}">Name</label>
+                    <input th:id="${'subcategory-name-'+subcategory.id}" name="name" class="form-control"
+                           maxlength="255" required th:value="${subcategory.name}">
+                </div>
+                <div class="form-group col-md-5">
+                    <label th:for="${'subcategory-category-'+subcategory.id}">Category</label>
+                    <select th:id="${'subcategory-category-'+subcategory.id}" name="categoryName" class="form-control" required>
+                        <option th:each="categoryOption : ${allCategories}" th:value="${categoryOption.name}"
+                                th:text="${categoryOption.name}"
+                                th:selected="${subcategory.categoryName == categoryOption.name}">Category</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-outline-primary btn-block">Save</button>
+                </div>
+            </form>
+            <form th:action="@{'/subcategories/'+${subcategory.id}+'/delete'}" method="post"
+                  onsubmit="return confirm('Delete this subcategory definition? Existing stores and transactions will be kept.');">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Delete subcategory</button>
+            </form>
+        </div>
+    </section>
+</main>
+<div th:insert="footer"></div>
+</body>
+</html>
