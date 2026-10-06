@@ -2,6 +2,7 @@ package com.silvionetto.budget
 
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 interface UploadedDocumentSummary {
@@ -9,6 +10,7 @@ interface UploadedDocumentSummary {
     val fileName: String
     val fileSize: Long
     val uploadedAt: Date
+    val sourceFileAvailable: Boolean
 }
 
 @Repository
@@ -21,6 +23,13 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocument, Long> {
     fun findAllByOwnerEmailOrderByUploadedAtDesc(ownerEmail: String): List<UploadedDocument>
     fun findAllProjectedByOwnerEmailOrderByUploadedAtDesc(ownerEmail: String): List<UploadedDocumentSummary>
     fun findByIdAndOwnerEmail(id: Long, ownerEmail: String): UploadedDocument?
+}
+
+@Repository
+interface BankMovementRepository : CrudRepository<BankMovement, Long> {
+    fun findAllByUploadedDocumentOrderByRowNumber(uploadedDocument: UploadedDocument): List<BankMovement>
+    @Transactional
+    fun deleteAllByUploadedDocument(uploadedDocument: UploadedDocument)
 }
 
 @Repository

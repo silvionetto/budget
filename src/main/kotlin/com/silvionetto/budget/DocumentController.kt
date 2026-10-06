@@ -22,7 +22,8 @@ import java.util.Locale
 
 @Controller
 class DocumentController(
-        private val documentService: DocumentService
+        private val documentService: DocumentService,
+        private val bankMovementImportService: BankMovementImportService
 ) {
     @GetMapping("/documents")
     fun documents(
@@ -40,12 +41,67 @@ class DocumentController(
             @AuthenticationPrincipal principal: OidcUser,
             redirectAttributes: RedirectAttributes
     ): String {
-        return try {
-            documentService.saveCsv(ownerEmail(principal), file)
-            redirectAttributes.addFlashAttribute("success", "CSV file uploaded.")
-            "redirect:/documents"
+        val saved = try {
+            bankMovementImportService.saveDocument(ownerEmail(principal), file)
         } catch (exception: InvalidDocumentException) {
             redirectAttributes.addFlashAttribute("error", exception.message)
+            return "redirect:/documents"
+        }
+
+        redirectAttributes.addFlashAttribute(
+                "success",
+                "CSV uploaded. ${saved.second} movements saved. Process the document to add them to your budget."
+        )
+        return "redirect:/documents"
+    }
+
+    @PostMapping("/documents/{id}/process")
+    fun reprocess(
+            @PathVariable id: Long,
+            @AuthenticationPrincipal principal: OidcUser,
+            redirectAttributes: RedirectAttributes
+    ): String {
+        val document = documentService.findForOwner(id, ownerEmail(principal))
+        if (document == null) {
+            redirectAttributes.addFlashAttribute("error", "Document not found.")
+            return "redirect:/documents"
+        }
+
+        return try {
+            val result = bankMovementImportService.processDocument(document)
+            redirectAttributes.addFlashAttribute(
+                    "success",
+                    "Document processed: ${result.imported} movements imported, " +
+                            "${result.duplicatesSkipped} duplicates skipped."
+            )
+            "redirect:/documents"
+        } catch (exception: InvalidDocumentException) {
+            redirectAttributes.addFlashAttribute("error", "Document was not processed: ${exception.message}")
+            "redirect:/documents"
+        }
+    }
+
+    @PostMapping("/documents/{id}/delete-source")
+    fun deleteSourceFile(
+            @PathVariable id: Long,
+            @AuthenticationPrincipal principal: OidcUser,
+            redirectAttributes: RedirectAttributes
+    ): String {
+        val document = documentService.findForOwner(id, ownerEmail(principal))
+        if (document == null) {
+            redirectAttributes.addFlashAttribute("error", "Document not found.")
+            return "redirect:/documents"
+        }
+
+        return try {
+            bankMovementImportService.deleteSourceFile(document)
+            redirectAttributes.addFlashAttribute(
+                    "success",
+                    "Original CSV file deleted. Saved movements are retained and can still be processed."
+            )
+            "redirect:/documents"
+        } catch (exception: InvalidDocumentException) {
+            redirectAttributes.addFlashAttribute("error", "CSV file was not deleted: ${exception.message}")
             "redirect:/documents"
         }
     }
@@ -57,13 +113,14 @@ class DocumentController(
     ): ResponseEntity<ByteArray> {
         val document = documentService.findForOwner(id, ownerEmail(principal))
                 ?: return ResponseEntity.notFound().build()
+        val content = document.content ?: return ResponseEntity.notFound().build()
 
         val headers = HttpHeaders().apply {
             contentType = MediaType.parseMediaType(document.contentType)
-            contentLength = document.fileSize
+            contentLength = content.size.toLong()
             contentDisposition = ContentDisposition.attachment().filename(document.fileName).build()
         }
-        return ResponseEntity(document.content, headers, HttpStatus.OK)
+        return ResponseEntity(content, headers, HttpStatus.OK)
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException::class)

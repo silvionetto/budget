@@ -1,6 +1,8 @@
 package com.silvionetto.budget
 
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.io.Serializable
 import java.util.*
 
@@ -81,7 +83,30 @@ data class UploadedDocument(
         @Column(nullable = false, length = 100) var contentType: String,
         @Column(nullable = false) var fileSize: Long,
         @Temporal(TemporalType.TIMESTAMP) @Column(nullable = false) var uploadedAt: Date,
-        @Column(nullable = false) var content: ByteArray
+        @Column(nullable = false) var sourceFileAvailable: Boolean = true,
+        @JdbcTypeCode(SqlTypes.LONGVARBINARY)
+        @Column(nullable = true) var content: ByteArray?
+) : BaseEntity()
+
+@Entity
+@Table(
+        name = "bank_movement",
+        uniqueConstraints = [UniqueConstraint(columnNames = ["uploaded_document_id", "row_number"])]
+)
+data class BankMovement(
+        @ManyToOne
+        @JoinColumn(name = "uploaded_document_id", nullable = false)
+        var uploadedDocument: UploadedDocument,
+        @Column(name = "row_number", nullable = false) var rowNumber: Int,
+        @Temporal(TemporalType.TIMESTAMP) var date: Date,
+        @Column(nullable = false, length = 255) var storeName: String,
+        @Column(nullable = false, length = 255) var account: String,
+        @Column(nullable = false, length = 255) var contraAccount: String,
+        @Column(nullable = false, length = 255) var code: String,
+        @Column(nullable = false, length = 255) var debitCredit: String,
+        @Column(nullable = false) var amount: Double,
+        @Column(nullable = false, length = 255) var transactionType: String,
+        @Column(nullable = false, length = 512) var notifications: String
 ) : BaseEntity()
 
 class Budget(
