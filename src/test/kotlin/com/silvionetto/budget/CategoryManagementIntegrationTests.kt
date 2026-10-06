@@ -27,18 +27,28 @@ class CategoryManagementIntegrationTests @Autowired constructor(
 ) {
 
     @Test
-    fun `management page renders category and subcategory controls`() {
+    fun `category and subcategory management are presented on separate pages`() {
         val suffix = UUID.randomUUID().toString().substring(0, 8)
         val category = categoryRepository.save(BudgetCategory("Category $suffix", BudgetType.EXPENSE))
         val subcategory = subCategoryRepository.save(BudgetSubCategory("Subcategory $suffix", category.name))
+        val otherCategory = categoryRepository.save(BudgetCategory("Other category $suffix", BudgetType.INCOME))
+        val otherSubcategory = subCategoryRepository.save(BudgetSubCategory("Other subcategory $suffix", otherCategory.name))
         try {
             mockMvc.perform(get("/categories").with(user("admin").roles("USER")))
                     .andExpect(status().isOk)
                     .andExpect(content().string(org.hamcrest.Matchers.containsString("Manage categories")))
-                    .andExpect(content().string(org.hamcrest.Matchers.containsString("Add subcategory")))
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString("Manage subcategories")))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Add subcategory"))))
+            mockMvc.perform(get("/categories/${category.id}/subcategories").with(user("admin").roles("USER")))
+                    .andExpect(status().isOk)
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString("Subcategories")))
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString(subcategory.name)))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(otherSubcategory.name))))
         } finally {
             subCategoryRepository.delete(subcategory)
+            subCategoryRepository.delete(otherSubcategory)
             categoryRepository.delete(category)
+            categoryRepository.delete(otherCategory)
         }
     }
 
@@ -64,6 +74,7 @@ class CategoryManagementIntegrationTests @Autowired constructor(
                         .with(user("admin").roles("USER"))
                         .with(csrf())
         ).andExpect(status().is3xxRedirection)
+                .andExpect(redirectedUrl("/categories/${category.id}/subcategories"))
 
         val subcategory = subCategoryRepository.findByNameAndCategoryName(subcategoryName, originalName)!!
         val store = storeRepository.save(Store("Store $suffix", originalName, subcategoryName))

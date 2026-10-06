@@ -34,76 +34,41 @@
         </div>
     </section>
 
-    <section th:each="group : ${categoryGroups}" class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <a th:href="@{'/categories/'+${group.category.name}}" th:text="${group.category.name}">Category</a>
-            <span class="badge badge-secondary" th:text="${group.category.type}">EXPENSE</span>
-        </div>
+    <section class="card mb-3" th:each="entry : ${categories}">
         <div class="card-body">
-            <form th:action="@{'/categories/'+${group.category.id}+'/update'}" method="post" class="form-row align-items-end">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">
+                    <a th:href="@{'/categories/'+${entry.first.name}}" th:text="${entry.first.name}">Category</a>
+                    <span class="badge badge-secondary" th:text="${entry.first.type}">EXPENSE</span>
+                </h2>
+                <a class="btn btn-outline-secondary btn-sm"
+                   th:href="@{'/categories/'+${entry.first.id}+'/subcategories'}">
+                    Manage subcategories <span class="badge badge-light" th:text="${entry.second}">0</span>
+                </a>
+            </div>
+
+            <form th:action="@{'/categories/'+${entry.first.id}+'/update'}" method="post" class="form-row align-items-end">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="form-group col-md-6">
-                    <label th:for="${'category-name-'+group.category.id}">Category name</label>
-                    <input th:id="${'category-name-'+group.category.id}" name="name" class="form-control"
-                           maxlength="255" required th:value="${group.category.name}">
+                    <label th:for="${'category-name-'+entry.first.id}">Category name</label>
+                    <input th:id="${'category-name-'+entry.first.id}" name="name" class="form-control"
+                           maxlength="255" required th:value="${entry.first.name}">
                 </div>
                 <div class="form-group col-md-3">
-                    <label th:for="${'category-type-'+group.category.id}">Type</label>
-                    <select th:id="${'category-type-'+group.category.id}" name="type" class="form-control" required>
-                        <option value="EXPENSE" th:selected="${group.category.type.name() == 'EXPENSE'}">Expense</option>
-                        <option value="INCOME" th:selected="${group.category.type.name() == 'INCOME'}">Income</option>
+                    <label th:for="${'category-type-'+entry.first.id}">Type</label>
+                    <select th:id="${'category-type-'+entry.first.id}" name="type" class="form-control" required>
+                        <option value="EXPENSE" th:selected="${entry.first.type.name() == 'EXPENSE'}">Expense</option>
+                        <option value="INCOME" th:selected="${entry.first.type.name() == 'INCOME'}">Income</option>
                     </select>
                 </div>
                 <div class="form-group col-md-3">
                     <button type="submit" class="btn btn-outline-primary btn-block">Save category</button>
                 </div>
             </form>
-
-            <form th:action="@{'/categories/'+${group.category.id}+'/delete'}" method="post" class="mb-4"
+            <form th:action="@{'/categories/'+${entry.first.id}+'/delete'}" method="post"
                   onsubmit="return confirm('Delete this category and its subcategory definitions? Existing stores and transactions will be kept.');">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <button type="submit" class="btn btn-outline-danger btn-sm">Delete category</button>
-            </form>
-
-            <h3 class="h6">Subcategories</h3>
-            <div th:if="${#lists.isEmpty(group.subcategories)}" class="text-muted mb-3">No subcategories yet.</div>
-            <div th:each="subcategory : ${group.subcategories}" class="border rounded p-3 mb-2">
-                <form th:action="@{'/subcategories/'+${subcategory.id}+'/update'}" method="post" class="form-row align-items-end">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <div class="form-group col-md-5">
-                        <label th:for="${'subcategory-name-'+subcategory.id}">Name</label>
-                        <input th:id="${'subcategory-name-'+subcategory.id}" name="name" class="form-control"
-                               maxlength="255" required th:value="${subcategory.name}">
-                    </div>
-                    <div class="form-group col-md-5">
-                        <label th:for="${'subcategory-category-'+subcategory.id}">Category</label>
-                        <select th:id="${'subcategory-category-'+subcategory.id}" name="categoryName" class="form-control" required>
-                            <option th:each="categoryOption : ${allCategories}" th:value="${categoryOption.name}"
-                                    th:text="${categoryOption.name}"
-                                    th:selected="${subcategory.categoryName == categoryOption.name}">Category</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <button type="submit" class="btn btn-outline-primary btn-block">Save subcategory</button>
-                    </div>
-                </form>
-                <form th:action="@{'/subcategories/'+${subcategory.id}+'/delete'}" method="post"
-                      onsubmit="return confirm('Delete this subcategory definition? Existing stores and transactions will be kept.');">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete subcategory</button>
-                </form>
-            </div>
-
-            <form th:action="@{'/categories/'+${group.category.id}+'/subcategories'}" method="post" class="form-row align-items-end mt-3">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <div class="form-group col-md-8">
-                    <label th:for="${'new-subcategory-'+group.category.id}">New subcategory</label>
-                    <input th:id="${'new-subcategory-'+group.category.id}" name="name" class="form-control"
-                           maxlength="255" required>
-                </div>
-                <div class="form-group col-md-4">
-                    <button type="submit" class="btn btn-secondary btn-block">Add subcategory</button>
-                </div>
             </form>
         </div>
     </section>

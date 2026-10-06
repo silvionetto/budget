@@ -16,11 +16,6 @@ import java.time.Year
 import java.util.function.Supplier
 import jakarta.persistence.EntityNotFoundException
 
-data class CategoryManagementGroup(
-        val category: BudgetCategory,
-        val subcategories: List<BudgetSubCategory>
-)
-
 @Controller
 @PropertySource("classpath:app.properties")
 @ConfigurationProperties("app")
@@ -93,14 +88,9 @@ class HtmlController() {
         model["nextYear"] = getNextYear(year)
         model["title"] = title
         val categories = categoryRepository.findAll().toList().sortedBy { it.name }
-        model["allCategories"] = categories
-        model["categoryGroups"] = categories
-                .map { category ->
-                    CategoryManagementGroup(
-                            category,
-                            subCategoryRepository.findByCategoryName(category.name).sortedBy { it.name }
-                    )
-                }
+        model["categories"] = categories.map { category ->
+            category to subCategoryRepository.findByCategoryName(category.name).size
+        }
         return "categories"
     }
 
@@ -160,6 +150,7 @@ class HtmlController() {
             )
             subCategoryService.saveSubCategory(BudgetSubCategory(name.trim(), category.name))
             redirectAttributes.addFlashAttribute("success", "Subcategory created.")
+            return "redirect:/categories/${category.id}/subcategories"
         } catch (exception: IllegalArgumentException) {
             redirectAttributes.addFlashAttribute("error", exception.message ?: "Could not create subcategory.")
         } catch (exception: EntityNotFoundException) {
@@ -175,26 +166,59 @@ class HtmlController() {
             @RequestParam categoryName: String,
             redirectAttributes: RedirectAttributes
     ): String {
+        var redirectUrl = "redirect:/categories"
+        subCategoryRepository.findById(id).ifPresent { current ->
+            categoryRepository.findByName(current.categoryName)?.id?.let {
+                redirectUrl = "redirect:/categories/$it/subcategories"
+            }
+        }
         try {
-            subCategoryService.update(id, name.trim(), categoryName)
+            val subCategory = subCategoryService.update(id, name.trim(), categoryName)
             redirectAttributes.addFlashAttribute("success", "Subcategory updated.")
+            val categoryId = categoryRepository.findByName(subCategory.categoryName)?.id
+            if (categoryId != null) {
+                redirectUrl = "redirect:/categories/$categoryId/subcategories"
+            }
         } catch (exception: IllegalArgumentException) {
             redirectAttributes.addFlashAttribute("error", exception.message ?: "Could not update subcategory.")
         } catch (exception: EntityNotFoundException) {
             redirectAttributes.addFlashAttribute("error", exception.message ?: "Subcategory not found.")
         }
-        return "redirect:/categories"
+        return redirectUrl
     }
 
     @PostMapping("/subcategories/{id}/delete")
     fun deleteSubCategory(@PathVariable id: Long, redirectAttributes: RedirectAttributes): String {
+        var redirectUrl = "redirect:/categories"
+        subCategoryRepository.findById(id).ifPresent { current ->
+            categoryRepository.findByName(current.categoryName)?.id?.let {
+                redirectUrl = "redirect:/categories/$it/subcategories"
+            }
+        }
         try {
+            val subcategory = subCategoryRepository.findById(id)
+                    .orElseThrow(Supplier { EntityNotFoundException("Subcategory id $id not found!") })
+            val categoryId = categoryRepository.findByName(subcategory.categoryName)?.id
             subCategoryService.delete(id)
             redirectAttributes.addFlashAttribute("success", "Subcategory deleted.")
+            if (categoryId != null) {
+                redirectUrl = "redirect:/categories/$categoryId/subcategories"
+            }
         } catch (exception: EntityNotFoundException) {
             redirectAttributes.addFlashAttribute("error", exception.message ?: "Subcategory not found.")
         }
-        return "redirect:/categories"
+        return redirectUrl
+    }
+
+    @GetMapping("/categories/{id}/subcategories")
+    fun manageSubCategories(@PathVariable id: Long, model: Model): String {
+        val category = categoryRepository.findById(id).orElse(null)
+                ?: return "redirect:/categories"
+        model["title"] = "Subcategories: ${category.name}"
+        model["category"] = category
+        model["subcategories"] = subCategoryRepository.findByCategoryName(category.name).sortedBy { it.name }
+        model["allCategories"] = categoryRepository.findAll().toList().sortedBy { it.name }
+        return "subcategories"
     }
 
     @GetMapping("/stores")
