@@ -43,13 +43,17 @@ class StoreService {
         return store
     }
 
-    fun update(id: Long, category: String, subCategory: String, name: String): Store {
+    fun update(id: Long, category: String, subCategoryId: Long, name: String): Store {
         val store: Store = storeRepository.findById(id).orElseThrow(Supplier { EntityNotFoundException("Store id $id not found!") })
         store.name = name
-        val budgetSubCategory = subCategoryRepository.findByName(subCategory)
-        budgetSubCategory?.apply {
-            store.subCategory = this
+        val budgetCategory = categoryRepository.findByName(category)
+                ?: throw EntityNotFoundException("Category $category not found!")
+        val budgetSubCategory = subCategoryRepository.findById(subCategoryId)
+                .orElseThrow(Supplier { EntityNotFoundException("SubCategory id $subCategoryId not found!") })
+        if (budgetSubCategory.category.id != budgetCategory.id) {
+            throw IllegalArgumentException("Invalid category/subcategory combination")
         }
+        store.subCategory = budgetSubCategory
         val transactions = transactionRepository.findByStore(store)
         transactions.forEach { transaction ->
             transaction.subCategory = store.subCategory
