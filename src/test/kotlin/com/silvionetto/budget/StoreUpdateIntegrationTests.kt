@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.Date
 import java.util.UUID
 
 @SpringBootTest
@@ -20,7 +21,8 @@ class StoreUpdateIntegrationTests @Autowired constructor(
         private val mockMvc: MockMvc,
         private val categoryRepository: CategoryRepository,
         private val subCategoryRepository: SubCategoryRepository,
-        private val storeRepository: StoreRepository
+        private val storeRepository: StoreRepository,
+        private val transactionRepository: TransactionRepository
 ) {
 
     @Test
@@ -29,26 +31,33 @@ class StoreUpdateIntegrationTests @Autowired constructor(
         val categoryA = categoryRepository.save(BudgetCategory("Category A $suffix", BudgetType.EXPENSE))
         val categoryB = categoryRepository.save(BudgetCategory("Category B $suffix", BudgetType.EXPENSE))
         val sharedSubCategoryName = "Shared $suffix"
-        val subCategoryA = subCategoryRepository.save(BudgetSubCategory(sharedSubCategoryName, categoryA))
-        val subCategoryB = subCategoryRepository.save(BudgetSubCategory(sharedSubCategoryName, categoryB))
-        val store = storeRepository.save(Store("Store $suffix", subCategoryA))
+        val subCategoryA = subCategoryRepository.save(BudgetSubCategory(sharedSubCategoryName, categoryA.name))
+        val subCategoryB = subCategoryRepository.save(BudgetSubCategory(sharedSubCategoryName, categoryB.name))
+        val store = storeRepository.save(Store("Store $suffix", categoryA.name, subCategoryA.name))
+        val transaction = transactionRepository.save(
+                Transaction(Date(), store, "account", "contra", "code", "Debit", 10.0, "purchase", "",
+                        categoryA.name, subCategoryA.name)
+        )
 
         try {
             mockMvc.perform(
                     post("/store/${store.id}")
                             .param("name", store.name)
-                            .param("category", categoryB.name)
-                            .param("subCategoryId", subCategoryB.id.toString())
+                            .param("categoryName", categoryB.name)
+                            .param("subCategoryName", subCategoryB.name)
                             .with(user("admin").roles("USER"))
                             .with(csrf())
             )
                     .andExpect(status().isOk)
 
             val updatedStore = storeRepository.findById(store.id!!).orElseThrow()
-            assertThat(updatedStore.subCategory.id).isEqualTo(subCategoryB.id)
-            assertThat(updatedStore.subCategory.category.id).isEqualTo(categoryB.id)
-            assertThat(updatedStore.subCategory.name).isEqualTo(sharedSubCategoryName)
+            assertThat(updatedStore.categoryName).isEqualTo(categoryB.name)
+            assertThat(updatedStore.subCategoryName).isEqualTo(sharedSubCategoryName)
+            val unchangedTransaction = transactionRepository.findById(transaction.id!!).orElseThrow()
+            assertThat(unchangedTransaction.categoryName).isEqualTo(categoryA.name)
+            assertThat(unchangedTransaction.subCategoryName).isEqualTo(sharedSubCategoryName)
         } finally {
+            transactionRepository.findById(transaction.id!!).ifPresent(transactionRepository::delete)
             storeRepository.findById(store.id!!).ifPresent(storeRepository::delete)
             subCategoryRepository.findById(subCategoryA.id!!).ifPresent(subCategoryRepository::delete)
             subCategoryRepository.findById(subCategoryB.id!!).ifPresent(subCategoryRepository::delete)
@@ -62,17 +71,18 @@ class StoreUpdateIntegrationTests @Autowired constructor(
         val suffix = UUID.randomUUID().toString().substring(0, 8)
         val categoryA = categoryRepository.save(BudgetCategory("Category A $suffix", BudgetType.EXPENSE))
         val categoryB = categoryRepository.save(BudgetCategory("Category B $suffix", BudgetType.EXPENSE))
-        val sharedSubCategoryName = "Shared $suffix"
-        val subCategoryA = subCategoryRepository.save(BudgetSubCategory(sharedSubCategoryName, categoryA))
-        val subCategoryB = subCategoryRepository.save(BudgetSubCategory(sharedSubCategoryName, categoryB))
-        val store = storeRepository.save(Store("Store $suffix", subCategoryA))
+        val subCategoryNameA = "Subcategory A $suffix"
+        val subCategoryNameB = "Subcategory B $suffix"
+        val subCategoryA = subCategoryRepository.save(BudgetSubCategory(subCategoryNameA, categoryA.name))
+        val subCategoryB = subCategoryRepository.save(BudgetSubCategory(subCategoryNameB, categoryB.name))
+        val store = storeRepository.save(Store("Store $suffix", categoryA.name, subCategoryA.name))
 
         try {
             mockMvc.perform(
                     post("/store/${store.id}")
                             .param("name", store.name)
-                            .param("category", categoryA.name)
-                            .param("subCategoryId", subCategoryB.id.toString())
+                            .param("categoryName", categoryA.name)
+                            .param("subCategoryName", subCategoryB.name)
                             .with(user("admin").roles("USER"))
                             .with(csrf())
             )
@@ -84,7 +94,8 @@ class StoreUpdateIntegrationTests @Autowired constructor(
                     ))
 
             val unchangedStore = storeRepository.findById(store.id!!).orElseThrow()
-            assertThat(unchangedStore.subCategory.id).isEqualTo(subCategoryA.id)
+            assertThat(unchangedStore.categoryName).isEqualTo(categoryA.name)
+            assertThat(unchangedStore.subCategoryName).isEqualTo(subCategoryA.name)
         } finally {
             storeRepository.findById(store.id!!).ifPresent(storeRepository::delete)
             subCategoryRepository.findById(subCategoryA.id!!).ifPresent(subCategoryRepository::delete)
@@ -94,5 +105,3 @@ class StoreUpdateIntegrationTests @Autowired constructor(
         }
     }
 }
-
-

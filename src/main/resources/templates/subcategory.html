@@ -7,8 +7,7 @@
 <div th:insert="header :: title"></div>
 
 <h1>
-    <a href="home" th:href="@{'/'}" th:text="${subcategory.category.type}">category.type</a> :
-    <a href="home" th:href="@{'/'+${subcategory.category.type}+'/'+${subcategory.category.name}}" th:text="${subcategory.category.name}">category.name</a> :
+    <a href="home" th:href="@{'/categories/'+${category}}" th:text="${category}">category</a> :
     <span th:text="${subcategory.name}">subcategory.name</span>
 </h1>
 

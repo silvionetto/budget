@@ -7,18 +7,19 @@
 <div th:insert="header :: title"></div>
 
 <h1>
-    <a href="home" th:href="@{'/'}" th:text="${subcategory.category.type}">category.type</a> :
-    <a href="category" th:href="@{'/'+${subcategory.category.type}+'/'+${subcategory.category.name}}" th:text="${subcategory.category.name}">category.name</a> :
-    <a href="subcategory" th:href="@{'/'+${subcategory.category.type}+'/'+${subcategory.category.name}+'/'+${subcategory.name}}" th:text="${subcategory.name}">subcategory.name</a>
+    <a href="category" th:href="@{'/categories/'+${store.categoryName}}" th:text="${store.categoryName}">category.name</a> :
+    <a href="subcategory" th:href="@{'/subcategories/'+${categoryType}+'/'+${store.categoryName}+'/'+${store.subCategoryName}}"
+       th:text="${store.subCategoryName}">subcategory.name</a>
 </h1>
 
-<h2 th:text="${title}+' : '+${category.type}+' : '+${category.name}+' : '+${subcategory.name}">title : category.type :
-    category.name : subcategory.name</h2>
+<h2 th:text="${title}+' : '+${store.categoryName}+' : '+${store.subCategoryName}">title : category : subcategory</h2>
 
 <div class="alert alert-danger" role="alert" th:if="${error}" th:text="${error}"></div>
+<div class="alert alert-info" role="alert">
+    Store and transaction category labels are saved as text. Renaming or deleting a category does not rewrite existing records.
+</div>
 
-<form enctype="application/json" name="store" action="/store/store.id" th:action="@{'/store/'+${store.id}}"
-      method="post">
+<form name="store" action="/store/store.id" th:action="@{'/store/'+${store.id}}" method="post">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
     <fieldset>
         <label>Name:</label>
@@ -26,20 +27,25 @@
     </fieldset>
 
     <fieldset>
-        <label>Category:</label>
-        <select id="category" name="category">
-            <option value="name" th:each="category : ${categories}" th:value="${category.name}" th:text="${category.name}" th:selected="${store.subCategory.category.name==category.name}">name</option>
+        <label for="categoryName">Category:</label>
+        <select id="categoryName" name="categoryName" class="form-control" required>
+            <option th:if="${!hasStoredCategoryDefinition}" th:value="${store.categoryName}"
+                    th:text="${store.categoryName}" selected></option>
+            <option th:each="categoryOption : ${categories}" th:value="${categoryOption.name}"
+                    th:text="${categoryOption.name}" th:selected="${store.categoryName == categoryOption.name}">name</option>
         </select>
     </fieldset>
 
     <fieldset>
-        <label>SubCategory:</label>
-        <select id="subCategoryId" name="subCategoryId">
-            <option value="id"
-                    th:each="subCategory : ${subcategories}"
-                    th:value="${subCategory.id}"
-                    th:text="${subCategory.category.name + ' - ' + subCategory.name}"
-                    th:selected="${store.subCategory.id==subCategory.id}">subcategory</option>
+        <label for="subCategoryName">Subcategory:</label>
+        <select id="subCategoryName" name="subCategoryName" class="form-control" required>
+            <option th:if="${!hasStoredSubcategoryDefinition}" th:value="${store.subCategoryName}"
+                    th:text="${store.categoryName + ' - ' + store.subCategoryName}" selected></option>
+            <option th:each="subcategoryOption : ${subcategories}" th:value="${subcategoryOption.name}"
+                    th:text="${subcategoryOption.categoryName + ' - ' + subcategoryOption.name}"
+                    th:selected="${store.categoryName == subcategoryOption.categoryName and store.subCategoryName == subcategoryOption.name}">
+                subcategory
+            </option>
         </select>
     </fieldset>
 

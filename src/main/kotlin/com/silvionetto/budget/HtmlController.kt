@@ -16,6 +16,11 @@ import java.time.Year
 import java.util.function.Supplier
 import jakarta.persistence.EntityNotFoundException
 
+data class CategoryManagementGroup(
+        val category: BudgetCategory,
+        val subcategories: List<BudgetSubCategory>
+)
+
 @Controller
 @PropertySource("classpath:app.properties")
 @ConfigurationProperties("app")
@@ -32,6 +37,12 @@ class HtmlController() {
 
     @Autowired
     lateinit var storeService: StoreService
+
+    @Autowired
+    lateinit var categoryService: CategoryService
+
+    @Autowired
+    lateinit var subCategoryService: SubCategoryService
 
     @Autowired
     lateinit var budgetService: BudgetService
@@ -81,8 +92,109 @@ class HtmlController() {
         model["year"] = year
         model["nextYear"] = getNextYear(year)
         model["title"] = title
-        model["categories"] = categoryRepository.findAll()
+        val categories = categoryRepository.findAll().toList().sortedBy { it.name }
+        model["allCategories"] = categories
+        model["categoryGroups"] = categories
+                .map { category ->
+                    CategoryManagementGroup(
+                            category,
+                            subCategoryRepository.findByCategoryName(category.name).sortedBy { it.name }
+                    )
+                }
         return "categories"
+    }
+
+    @PostMapping("/categories")
+    fun createCategory(
+            @RequestParam name: String,
+            @RequestParam type: BudgetType,
+            redirectAttributes: RedirectAttributes
+    ): String {
+        try {
+            categoryService.saveCategory(BudgetCategory(name.trim(), type))
+            redirectAttributes.addFlashAttribute("success", "Category created.")
+        } catch (exception: IllegalArgumentException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Could not create category.")
+        }
+        return "redirect:/categories"
+    }
+
+    @PostMapping("/categories/{id}/update")
+    fun updateCategory(
+            @PathVariable id: Long,
+            @RequestParam name: String,
+            @RequestParam type: BudgetType,
+            redirectAttributes: RedirectAttributes
+    ): String {
+        try {
+            categoryService.update(id, name.trim(), type)
+            redirectAttributes.addFlashAttribute("success", "Category updated.")
+        } catch (exception: IllegalArgumentException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Could not update category.")
+        } catch (exception: EntityNotFoundException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Category not found.")
+        }
+        return "redirect:/categories"
+    }
+
+    @PostMapping("/categories/{id}/delete")
+    fun deleteCategory(@PathVariable id: Long, redirectAttributes: RedirectAttributes): String {
+        try {
+            categoryService.delete(id)
+            redirectAttributes.addFlashAttribute("success", "Category and its subcategory definitions deleted.")
+        } catch (exception: EntityNotFoundException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Category not found.")
+        }
+        return "redirect:/categories"
+    }
+
+    @PostMapping("/categories/{id}/subcategories")
+    fun createSubCategory(
+            @PathVariable id: Long,
+            @RequestParam name: String,
+            redirectAttributes: RedirectAttributes
+    ): String {
+        try {
+            val category = categoryRepository.findById(id).orElseThrow(
+                    Supplier { EntityNotFoundException("Category id $id not found!") }
+            )
+            subCategoryService.saveSubCategory(BudgetSubCategory(name.trim(), category.name))
+            redirectAttributes.addFlashAttribute("success", "Subcategory created.")
+        } catch (exception: IllegalArgumentException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Could not create subcategory.")
+        } catch (exception: EntityNotFoundException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Category not found.")
+        }
+        return "redirect:/categories"
+    }
+
+    @PostMapping("/subcategories/{id}/update")
+    fun updateSubCategory(
+            @PathVariable id: Long,
+            @RequestParam name: String,
+            @RequestParam categoryName: String,
+            redirectAttributes: RedirectAttributes
+    ): String {
+        try {
+            subCategoryService.update(id, name.trim(), categoryName)
+            redirectAttributes.addFlashAttribute("success", "Subcategory updated.")
+        } catch (exception: IllegalArgumentException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Could not update subcategory.")
+        } catch (exception: EntityNotFoundException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Subcategory not found.")
+        }
+        return "redirect:/categories"
+    }
+
+    @PostMapping("/subcategories/{id}/delete")
+    fun deleteSubCategory(@PathVariable id: Long, redirectAttributes: RedirectAttributes): String {
+        try {
+            subCategoryService.delete(id)
+            redirectAttributes.addFlashAttribute("success", "Subcategory deleted.")
+        } catch (exception: EntityNotFoundException) {
+            redirectAttributes.addFlashAttribute("error", exception.message ?: "Subcategory not found.")
+        }
+        return "redirect:/categories"
     }
 
     @GetMapping("/stores")
@@ -97,28 +209,25 @@ class HtmlController() {
         model["previousYear"] = getPreviousYear(year)
         model["year"] = year
         model["nextYear"] = getNextYear(year)
-        val category = categoryRepository.findByName(name)
-        category?.apply {
-            model["year"] = year
-            model["title"] = category.name
-            model["category"] = category
-            model["subcategories"] = subCategoryRepository.findByCategory(category)
-            model["transactions"] = transactionRepository.findBySubCategoryCategory(category)
-            model["budgets"] = budgetService.getBudget(year, category)
-        }
+        val category = categoryRepository.findByName(name) ?: return "redirect:/categories"
+        model["year"] = year
+        model["title"] = category.name
+        model["category"] = category
+        model["subcategories"] = subCategoryRepository.findByCategoryName(category.name)
+        model["transactions"] = transactionRepository.findByCategoryName(category.name)
+        model["budgets"] = budgetService.getBudget(year, category)
         return "category"
     }
 
     @GetMapping("/subcategories/{type}/{category}/{name}")
     fun subcategory(@PathVariable type: String, @PathVariable category: String,
                     @PathVariable name: String, model: Model): String {
-        val subCategory = subCategoryRepository.findByName(name)
-        subCategory?.apply {
-            model["title"] = name
-            model["category"] = category
-            model["subcategory"] = this
-            model["stores"] = storeRepository.findBySubCategory(subCategory)
-        }
+        val subCategory = subCategoryRepository.findByNameAndCategoryName(name, category)
+                ?: return "redirect:/categories"
+        model["title"] = name
+        model["category"] = category
+        model["subcategory"] = subCategory
+        model["stores"] = storeRepository.findByCategoryNameAndSubCategoryName(category, name)
         return "subcategory"
     }
 
@@ -127,15 +236,10 @@ class HtmlController() {
                      @PathVariable year: String,
                      @PathVariable month: String,
                      model: Model): String {
-        val budgetCategory = categoryRepository.findByNameAndType(category, BudgetType.EXPENSE)
-        val budgetSubCategory = subCategoryRepository.findByCategory(budgetCategory)
-        val transactions = mutableListOf<Transaction>()
-        budgetSubCategory.forEach {
-            transactions.addAll(transactionService.getBySubCategoryAndYearAndMonth(it, year, month))
-        }
+        val transactions = transactionService.getByCategoryAndYearAndMonth(category, year, month)
         transactions.apply {
             model["title"] = month
-            model["category"] = budgetCategory
+            model["category"] = category
             model["transactions"] = this
         }
         return "transactions"
@@ -147,10 +251,15 @@ class HtmlController() {
         store.apply {
             model["store"] = this
             model["title"] = name
-            model["subcategory"] = subCategory
-            model["category"] = subCategory.category
-            model["categories"] = categoryRepository.findByType(subCategory.category.type)
-            model["subcategories"] = subCategoryRepository.findByCategoryType(subCategory.category.type)
+            model["subcategory"] = subCategoryName
+            model["category"] = categoryName
+            model["categoryType"] = categoryRepository.findByName(categoryName)?.type?.name ?: "ARCHIVED"
+            model["categories"] = categoryRepository.findAll().toList().sortedBy { it.name }
+            model["subcategories"] = subCategoryRepository.findAll().toList()
+                    .sortedWith(compareBy<BudgetSubCategory> { it.categoryName }.thenBy { it.name })
+            model["hasStoredCategoryDefinition"] = categoryRepository.findByName(categoryName) != null
+            model["hasStoredSubcategoryDefinition"] =
+                    subCategoryRepository.findByNameAndCategoryName(subCategoryName, categoryName) != null
             model["transactions"] = transactionRepository.findByStore(this)
         }
 
@@ -159,13 +268,13 @@ class HtmlController() {
 
     @PostMapping("/store/{id}")
     fun addStore(@RequestParam name: String,
-                 @RequestParam category: String,
-                 @RequestParam subCategoryId: Long,
+                 @RequestParam categoryName: String,
+                 @RequestParam subCategoryName: String,
                  @PathVariable id: Long,
                  model: Model,
                  redirectAttributes: RedirectAttributes): String {
         val store: Store = try {
-            storeService.update(id, category, subCategoryId, name)
+            storeService.update(id, categoryName, subCategoryName, name)
         } catch (_: IllegalArgumentException) {
             redirectAttributes.addFlashAttribute("error", "Could not update store. Please select a valid category and subcategory.")
             return "redirect:/store/$id"
@@ -173,13 +282,16 @@ class HtmlController() {
             redirectAttributes.addFlashAttribute("error", "Could not update store. Please select a valid category and subcategory.")
             return "redirect:/store/$id"
         }
-        val budgetSubCategory: BudgetSubCategory = store.subCategory
-        val budgetCategory: BudgetCategory = budgetSubCategory.category
         model["title"] = store.name
-        model["categories"] = categoryRepository.findByType(budgetCategory.type)
-        model["subcategories"] = subCategoryRepository.findByCategoryType(budgetCategory.type)
-        model["category"] = budgetCategory
-        model["subcategory"] = budgetSubCategory
+        model["categories"] = categoryRepository.findAll().toList().sortedBy { it.name }
+        model["subcategories"] = subCategoryRepository.findAll().toList()
+                .sortedWith(compareBy<BudgetSubCategory> { it.categoryName }.thenBy { it.name })
+        model["category"] = store.categoryName
+        model["categoryType"] = categoryRepository.findByName(store.categoryName)?.type?.name ?: "ARCHIVED"
+        model["subcategory"] = store.subCategoryName
+        model["hasStoredCategoryDefinition"] = categoryRepository.findByName(store.categoryName) != null
+        model["hasStoredSubcategoryDefinition"] =
+                subCategoryRepository.findByNameAndCategoryName(store.subCategoryName, store.categoryName) != null
         model["store"] = store
         return "store"
     }

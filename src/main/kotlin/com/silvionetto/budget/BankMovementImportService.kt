@@ -77,7 +77,8 @@ class BankMovementImportService(
                     movement.amount,
                     movement.transactionType,
                     movement.notifications,
-                    store.subCategory
+                    store.categoryName,
+                    store.subCategoryName
             )
             if (transactionService.exists(transaction)) {
                 duplicatesSkipped++
