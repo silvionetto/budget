@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.servlet.mvc.support.RedirectAttributes
 import java.time.Year
 import java.util.function.Supplier
 import jakarta.persistence.EntityNotFoundException
@@ -159,9 +160,19 @@ class HtmlController() {
     @PostMapping("/store/{id}")
     fun addStore(@RequestParam name: String,
                  @RequestParam category: String,
-                 @RequestParam subCategory: String,
-                 @PathVariable id: Long, model: Model): String {
-        val store: Store = storeService.update(id, category, subCategory, name)
+                 @RequestParam subCategoryId: Long,
+                 @PathVariable id: Long,
+                 model: Model,
+                 redirectAttributes: RedirectAttributes): String {
+        val store: Store = try {
+            storeService.update(id, category, subCategoryId, name)
+        } catch (_: IllegalArgumentException) {
+            redirectAttributes.addFlashAttribute("error", "Could not update store. Please select a valid category and subcategory.")
+            return "redirect:/store/$id"
+        } catch (_: EntityNotFoundException) {
+            redirectAttributes.addFlashAttribute("error", "Could not update store. Please select a valid category and subcategory.")
+            return "redirect:/store/$id"
+        }
         val budgetSubCategory: BudgetSubCategory = store.subCategory
         val budgetCategory: BudgetCategory = budgetSubCategory.category
         model["title"] = store.name
