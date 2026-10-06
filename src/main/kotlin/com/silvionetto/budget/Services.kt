@@ -34,6 +34,9 @@ class StoreService {
     @Autowired
     lateinit var subCategoryRepository: SubCategoryRepository
 
+    @Autowired
+    lateinit var transactionRepository: TransactionRepository
+
     fun saveStore(store: Store): Store {
         if (storeRepository.findByName(store.name) == null) {
             return storeRepository.save(store)
@@ -41,6 +44,7 @@ class StoreService {
         return store
     }
 
+    @Transactional
     fun update(id: Long, categoryName: String, subCategoryName: String, name: String): Store {
         val store: Store = storeRepository.findById(id).orElseThrow(Supplier { EntityNotFoundException("Store id $id not found!") })
         val category = categoryRepository.findByName(categoryName)
@@ -50,7 +54,13 @@ class StoreService {
         store.name = name
         store.categoryName = category.name
         store.subCategoryName = subCategory.name
-        return storeRepository.save(store)
+        val updatedStore = storeRepository.save(store)
+        val transactions = transactionRepository.findByStore(store).onEach { transaction ->
+            transaction.categoryName = category.name
+            transaction.subCategoryName = subCategory.name
+        }
+        transactionRepository.saveAll(transactions)
+        return updatedStore
     }
 
     fun saveStore(storeName: String, transactionSide: String): Store {

@@ -53,9 +53,9 @@ class StoreUpdateIntegrationTests @Autowired constructor(
             val updatedStore = storeRepository.findById(store.id!!).orElseThrow()
             assertThat(updatedStore.categoryName).isEqualTo(categoryB.name)
             assertThat(updatedStore.subCategoryName).isEqualTo(sharedSubCategoryName)
-            val unchangedTransaction = transactionRepository.findById(transaction.id!!).orElseThrow()
-            assertThat(unchangedTransaction.categoryName).isEqualTo(categoryA.name)
-            assertThat(unchangedTransaction.subCategoryName).isEqualTo(sharedSubCategoryName)
+            val reclassifiedTransaction = transactionRepository.findById(transaction.id!!).orElseThrow()
+            assertThat(reclassifiedTransaction.categoryName).isEqualTo(categoryB.name)
+            assertThat(reclassifiedTransaction.subCategoryName).isEqualTo(sharedSubCategoryName)
         } finally {
             transactionRepository.findById(transaction.id!!).ifPresent(transactionRepository::delete)
             storeRepository.findById(store.id!!).ifPresent(storeRepository::delete)
@@ -63,6 +63,51 @@ class StoreUpdateIntegrationTests @Autowired constructor(
             subCategoryRepository.findById(subCategoryB.id!!).ifPresent(subCategoryRepository::delete)
             categoryRepository.findById(categoryA.id!!).ifPresent(categoryRepository::delete)
             categoryRepository.findById(categoryB.id!!).ifPresent(categoryRepository::delete)
+        }
+    }
+
+    @Test
+    fun `reclassifying unknown incoming store moves its existing transaction to selected category`() {
+        val suffix = UUID.randomUUID().toString().substring(0, 8)
+        val unknownCategory = categoryRepository.save(
+                BudgetCategory("Unknown_Income $suffix", BudgetType.INCOME)
+        )
+        val unknownSubCategory = subCategoryRepository.save(
+                BudgetSubCategory("Unknown_Income $suffix", unknownCategory.name)
+        )
+        val targetCategory = categoryRepository.save(BudgetCategory("Income $suffix", BudgetType.INCOME))
+        val targetSubCategory = subCategoryRepository.save(BudgetSubCategory("Salary $suffix", targetCategory.name))
+        val store = storeRepository.save(
+                Store("Incoming store $suffix", unknownCategory.name, unknownSubCategory.name)
+        )
+        val transaction = transactionRepository.save(
+                Transaction(Date(), store, "account", "contra", "code", "Credit", 125.0, "income", "",
+                        unknownCategory.name, unknownSubCategory.name)
+        )
+
+        try {
+            mockMvc.perform(
+                    post("/store/${store.id}")
+                            .param("name", store.name)
+                            .param("categoryName", targetCategory.name)
+                            .param("subCategoryName", targetSubCategory.name)
+                            .with(user("admin").roles("USER"))
+                            .with(csrf())
+            ).andExpect(status().isOk)
+
+            val updatedStore = storeRepository.findById(store.id!!).orElseThrow()
+            val updatedTransaction = transactionRepository.findById(transaction.id!!).orElseThrow()
+            assertThat(updatedStore.categoryName).isEqualTo(targetCategory.name)
+            assertThat(updatedStore.subCategoryName).isEqualTo(targetSubCategory.name)
+            assertThat(updatedTransaction.categoryName).isEqualTo(targetCategory.name)
+            assertThat(updatedTransaction.subCategoryName).isEqualTo(targetSubCategory.name)
+        } finally {
+            transactionRepository.findById(transaction.id!!).ifPresent(transactionRepository::delete)
+            storeRepository.findById(store.id!!).ifPresent(storeRepository::delete)
+            subCategoryRepository.findById(unknownSubCategory.id!!).ifPresent(subCategoryRepository::delete)
+            subCategoryRepository.findById(targetSubCategory.id!!).ifPresent(subCategoryRepository::delete)
+            categoryRepository.findById(unknownCategory.id!!).ifPresent(categoryRepository::delete)
+            categoryRepository.findById(targetCategory.id!!).ifPresent(categoryRepository::delete)
         }
     }
 
