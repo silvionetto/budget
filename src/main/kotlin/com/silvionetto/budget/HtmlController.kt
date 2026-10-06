@@ -84,6 +84,13 @@ class HtmlController() {
         return "categories"
     }
 
+    @GetMapping("/stores")
+    fun stores(model: Model): String {
+        model["title"] = "Stores"
+        model["stores"] = storeRepository.findAll().toList().sortedBy { it.name }
+        return "stores"
+    }
+
     @GetMapping("/categories/{name}")
     fun category(@PathVariable name: String, model: Model): String {
         model["previousYear"] = getPreviousYear(year)
