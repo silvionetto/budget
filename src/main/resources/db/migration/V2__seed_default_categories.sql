@@ -1,20 +1,6 @@
 WITH category_seed(category_name, category_type, subcategories) AS (
     VALUES
-    (U&'Renda', 'INCOME', ARRAY[
-        U&'ING',
-        U&'FotografoBrasileiroemAmsterdam',
-        U&'Gabriel',
-        U&'Sociale Verzekeringsbank',
-        U&'Debora',
-        U&'Restituicao',
-        U&'Restitui\00E7\00E3o',
-        U&'Transferencia',
-        U&'Receita de juros',
-        U&'Retirada da Poupan\00E7a',
-        U&'Retirada da Conta Investimento',
-        U&'Dividendos',
-        U&'Ajustes'
-    ]),
+    (U&'Renda', 'INCOME', ARRAY[U&'ING', U&'Sociale Verzekeringsbank', U&'Debora', U&'Restituicao', U&'Transferencia', U&'Receita de juros']),
     (U&'Unknown_Income', 'INCOME', ARRAY[U&'Unknown_Income']),
     (U&'Unknown_Expense', 'EXPENSE', ARRAY[U&'Unknown_Expense']),
     (U&'Despesas Domesticas', 'EXPENSE', ARRAY[U&'Hipoteca', U&'Eletricidade', U&'Gas', U&'Agua', U&'Celular', U&'Cafe', U&'TV a cabo', U&'Internet', U&'Moveis', U&'Eletrodomestico', U&'Suprimentos', U&'Manutencao', U&'Melhorias', U&'Empregada', U&'Cloud']),
