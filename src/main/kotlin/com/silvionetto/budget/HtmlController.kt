@@ -311,6 +311,7 @@ class HtmlController() {
             model["categories"] = categoryRepository.findAll().toList().sortedBy { it.name }
             model["subcategories"] = subCategoryRepository.findByCategoryName(categoryName).sortedBy { it.name }
             model["subcategoriesByCategory"] = subcategoriesByCategory()
+            model["hasStoredCategoryDefinition"] = categoryRepository.findByName(categoryName) != null
             model["hasStoredSubcategoryDefinition"] =
                     subCategoryRepository.findByNameAndCategoryName(subCategoryName, categoryName) != null
             model["transactions"] = transactionRepository.findByStore(this)

@@ -39,6 +39,14 @@ class StoreUpdateIntegrationTests @Autowired constructor(
             mockMvc.perform(get("/stores/new").with(user("admin").roles("USER")))
                     .andExpect(status().isOk)
 
+            val existing = storeRepository.save(Store("Existing $suffix", categoryA.name, subA.name))
+            try {
+                mockMvc.perform(get("/store/${existing.id}").with(user("admin").roles("USER")))
+                        .andExpect(status().isOk)
+            } finally {
+                storeRepository.delete(existing)
+            }
+
             mockMvc.perform(
                     post("/stores/new")
                             .param("name", storeName)
