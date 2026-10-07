@@ -8,6 +8,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl
@@ -24,6 +25,47 @@ class StoreUpdateIntegrationTests @Autowired constructor(
         private val storeRepository: StoreRepository,
         private val transactionRepository: TransactionRepository
 ) {
+
+    @Test
+    fun `new store page loads and creating a store validates subcategory belongs to category`() {
+        val suffix = UUID.randomUUID().toString().substring(0, 8)
+        val categoryA = categoryRepository.save(BudgetCategory("Category A $suffix", BudgetType.EXPENSE))
+        val categoryB = categoryRepository.save(BudgetCategory("Category B $suffix", BudgetType.EXPENSE))
+        val subA = subCategoryRepository.save(BudgetSubCategory("Sub A $suffix", categoryA.name))
+        val subB = subCategoryRepository.save(BudgetSubCategory("Sub B $suffix", categoryB.name))
+        val storeName = "New store $suffix"
+
+        try {
+            mockMvc.perform(get("/stores/new").with(user("admin").roles("USER")))
+                    .andExpect(status().isOk)
+
+            mockMvc.perform(
+                    post("/stores/new")
+                            .param("name", storeName)
+                            .param("categoryName", categoryA.name)
+                            .param("subCategoryName", subB.name)
+                            .with(user("admin").roles("USER")).with(csrf())
+            ).andExpect(redirectedUrl("/stores/new"))
+            assertThat(storeRepository.findByName(storeName)).isNull()
+
+            mockMvc.perform(
+                    post("/stores/new")
+                            .param("name", storeName)
+                            .param("categoryName", categoryA.name)
+                            .param("subCategoryName", subA.name)
+                            .with(user("admin").roles("USER")).with(csrf())
+            ).andExpect(status().is3xxRedirection)
+            val created = storeRepository.findByName(storeName)!!
+            assertThat(created.categoryName).isEqualTo(categoryA.name)
+            assertThat(created.subCategoryName).isEqualTo(subA.name)
+        } finally {
+            storeRepository.findByName(storeName)?.let(storeRepository::delete)
+            subCategoryRepository.delete(subA)
+            subCategoryRepository.delete(subB)
+            categoryRepository.delete(categoryA)
+            categoryRepository.delete(categoryB)
+        }
+    }
 
     @Test
     fun `store update supports duplicate subcategory names across categories`() {

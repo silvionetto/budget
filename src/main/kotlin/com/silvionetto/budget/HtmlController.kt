@@ -228,6 +228,36 @@ class HtmlController() {
         return "stores"
     }
 
+    private fun subcategoriesByCategory(): Map<String, List<String>> =
+            subCategoryRepository.findAll().toList()
+                    .groupBy({ it.categoryName }, { it.name })
+                    .mapValues { it.value.sorted() }
+
+    @GetMapping("/stores/new")
+    fun newStore(model: Model): String {
+        model["title"] = "New store"
+        model["categories"] = categoryRepository.findAll().toList().sortedBy { it.name }
+        model["subcategoriesByCategory"] = subcategoriesByCategory()
+        return "new-store"
+    }
+
+    @PostMapping("/stores/new")
+    fun createStore(@RequestParam name: String,
+                    @RequestParam categoryName: String,
+                    @RequestParam subCategoryName: String,
+                    redirectAttributes: RedirectAttributes): String {
+        val store = try {
+            storeService.create(categoryName, subCategoryName, name)
+        } catch (_: IllegalArgumentException) {
+            redirectAttributes.addFlashAttribute("error", "Could not register store. Provide a unique name and a valid category and subcategory.")
+            return "redirect:/stores/new"
+        } catch (_: EntityNotFoundException) {
+            redirectAttributes.addFlashAttribute("error", "Could not register store. Provide a unique name and a valid category and subcategory.")
+            return "redirect:/stores/new"
+        }
+        return "redirect:/store/${store.id}"
+    }
+
     @GetMapping("/categories/{name}")
     fun category(@PathVariable name: String, model: Model): String {
         model["previousYear"] = getPreviousYear(year)
@@ -279,9 +309,8 @@ class HtmlController() {
             model["category"] = categoryName
             model["categoryType"] = categoryRepository.findByName(categoryName)?.type?.name ?: "ARCHIVED"
             model["categories"] = categoryRepository.findAll().toList().sortedBy { it.name }
-            model["subcategories"] = subCategoryRepository.findAll().toList()
-                    .sortedWith(compareBy<BudgetSubCategory> { it.categoryName }.thenBy { it.name })
-            model["hasStoredCategoryDefinition"] = categoryRepository.findByName(categoryName) != null
+            model["subcategories"] = subCategoryRepository.findByCategoryName(categoryName).sortedBy { it.name }
+            model["subcategoriesByCategory"] = subcategoriesByCategory()
             model["hasStoredSubcategoryDefinition"] =
                     subCategoryRepository.findByNameAndCategoryName(subCategoryName, categoryName) != null
             model["transactions"] = transactionRepository.findByStore(this)
@@ -308,9 +337,8 @@ class HtmlController() {
         }
         model["title"] = store.name
         model["categories"] = categoryRepository.findAll().toList().sortedBy { it.name }
-        model["subcategories"] = subCategoryRepository.findAll().toList()
-                .sortedWith(compareBy<BudgetSubCategory> { it.categoryName }.thenBy { it.name })
-        model["category"] = store.categoryName
+        model["subcategories"] = subCategoryRepository.findByCategoryName(store.categoryName).sortedBy { it.name }
+        model["subcategoriesByCategory"] = subcategoriesByCategory()
         model["categoryType"] = categoryRepository.findByName(store.categoryName)?.type?.name ?: "ARCHIVED"
         model["subcategory"] = store.subCategoryName
         model["hasStoredCategoryDefinition"] = categoryRepository.findByName(store.categoryName) != null

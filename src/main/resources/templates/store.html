@@ -42,8 +42,8 @@
             <option th:if="${!hasStoredSubcategoryDefinition}" th:value="${store.subCategoryName}"
                     th:text="${store.categoryName + ' - ' + store.subCategoryName}" selected></option>
             <option th:each="subcategoryOption : ${subcategories}" th:value="${subcategoryOption.name}"
-                    th:text="${subcategoryOption.categoryName + ' - ' + subcategoryOption.name}"
-                    th:selected="${store.categoryName == subcategoryOption.categoryName and store.subCategoryName == subcategoryOption.name}">
+                    th:text="${subcategoryOption.name}"
+                    th:selected="${store.subCategoryName == subcategoryOption.name}">
                 subcategory
             </option>
         </select>
@@ -54,6 +54,17 @@
     </fieldset>
 
 </form>
+
+<script th:inline="javascript">
+    const subcategoriesByCategory = /*[[${subcategoriesByCategory}]]*/ {};
+    document.getElementById('categoryName').addEventListener('change', function () {
+        const select = document.getElementById('subCategoryName');
+        select.innerHTML = '';
+        (subcategoriesByCategory[this.value] || []).forEach(function (name) {
+            select.add(new Option(name, name));
+        });
+    });
+</script>
 
 <div th:insert="transaction"></div>
 </body>
