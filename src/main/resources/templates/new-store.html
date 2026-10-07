@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:insert="header"></div>
+<body>
+<div th:insert="menu"></div>
+<div th:insert="header :: title"></div>
+
+<h2>New store</h2>
+
+<div class="alert alert-danger" role="alert" th:if="${error}" th:text="${error}"></div>
+
+<form name="store" action="/stores/new" th:action="@{/stores/new}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    <fieldset>
+        <label for="name">Name:</label>
+        <input type="text" class="form-control" name="name" id="name" size="100" required>
+    </fieldset>
+
+    <fieldset>
+        <label for="categoryName">Category:</label>
+        <select id="categoryName" name="categoryName" class="form-control" required>
+            <option value="" selected disabled>Select a category</option>
+            <option th:each="categoryOption : ${categories}" th:value="${categoryOption.name}"
+                    th:text="${categoryOption.name}">name</option>
+        </select>
+    </fieldset>
+
+    <fieldset>
+        <label for="subCategoryName">Subcategory:</label>
+        <select id="subCategoryName" name="subCategoryName" class="form-control" required disabled>
+            <option value="" selected disabled>Select a category first</option>
+        </select>
+    </fieldset>
+
+    <fieldset>
+        <button type="submit" class="btn btn-primary">Register</button>
+    </fieldset>
+</form>
+
+<script th:inline="javascript">
+    const subcategoriesByCategory = /*[[${subcategoriesByCategory}]]*/ {};
+    document.getElementById('categoryName').addEventListener('change', function () {
+        const select = document.getElementById('subCategoryName');
+        select.innerHTML = '';
+        const names = subcategoriesByCategory[this.value] || [];
+        select.add(new Option('Select a subcategory', '', true, true));
+        select.options[0].disabled = true;
+        names.forEach(function (name) {
+            select.add(new Option(name, name));
+        });
+        select.disabled = names.length === 0;
+    });
+</script>
+
+<div th:insert="footer"></div>
+</body>
+
+</html>

@@ -45,6 +45,18 @@ class StoreService {
     }
 
     @Transactional
+    fun create(categoryName: String, subCategoryName: String, name: String): Store {
+        val trimmed = name.trim()
+        require(trimmed.isNotEmpty()) { "Store name is required" }
+        require(storeRepository.findByName(trimmed) == null) { "Store already exists" }
+        val category = categoryRepository.findByName(categoryName)
+                ?: throw EntityNotFoundException("Category $categoryName not found!")
+        val subCategory = subCategoryRepository.findByNameAndCategoryName(subCategoryName, categoryName)
+                ?: throw IllegalArgumentException("Invalid category/subcategory combination")
+        return storeRepository.save(Store(trimmed, category.name, subCategory.name))
+    }
+
+    @Transactional
     fun update(id: Long, categoryName: String, subCategoryName: String, name: String): Store {
         val store: Store = storeRepository.findById(id).orElseThrow(Supplier { EntityNotFoundException("Store id $id not found!") })
         val category = categoryRepository.findByName(categoryName)
